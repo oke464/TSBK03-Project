@@ -31,6 +31,8 @@
 *.out
 *.app
 
+Simulation 
+
 # Cmake stuff
 Makefile
 CMakeCache.txt

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # set the project name
-project(myapp)
+project(Simulation)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 14)
@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # add the executable
 add_executable(
-    myapp 
+    Simulation 
     main.cpp
     )
 
@@ -18,7 +18,7 @@ add_subdirectory(glad/)
 # -------------------
 
 #[[
-target_include_directories(myapp PUBLIC
+target_include_directories(Simulation PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/Glad/include"
 
@@ -27,13 +27,13 @@ target_include_directories(myapp PUBLIC
 # --- Using GLFW binaries link library like this --
 find_package(glfw3 3.3 REQUIRED)
 target_link_libraries(
-    myapp 
+    Simulation 
     glfw
     glad
     )
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(myapp OpenGL::GL)
+target_link_libraries(Simulation OpenGL::GL)
 
 # -------------------------------------------
 
@@ -45,10 +45,10 @@ target_link_libraries(myapp OpenGL::GL)
 
 #add_subdirectory(path/to/glfw)
 
-#target_link_libraries(myapp glfw)
+#target_link_libraries(Simulation glfw)
 
 #find_package(OpenGL REQUIRED)
-#target_link_libraries(myapp OpenGL::GL)
+#target_link_libraries(Simulation OpenGL::GL)
 
 # ----------------------------------------------
 
