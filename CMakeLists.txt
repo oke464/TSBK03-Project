@@ -10,13 +10,27 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # add the executable
 add_executable(
     myapp 
-    
     main.cpp
     )
 
+# --- Link GLAD lib ---
+add_subdirectory(glad/)
+# -------------------
+
+#[[
+target_include_directories(myapp PUBLIC
+                          "${PROJECT_BINARY_DIR}"
+                          "${PROJECT_SOURCE_DIR}/Glad/include"
+
+                          )
+]]
 # --- Using GLFW binaries link library like this --
 find_package(glfw3 3.3 REQUIRED)
-target_link_libraries(myapp glfw)
+target_link_libraries(
+    myapp 
+    glfw
+    glad
+    )
 
 find_package(OpenGL REQUIRED)
 target_link_libraries(myapp OpenGL::GL)
@@ -37,3 +51,6 @@ target_link_libraries(myapp OpenGL::GL)
 #target_link_libraries(myapp OpenGL::GL)
 
 # ----------------------------------------------
+
+
+

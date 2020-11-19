@@ -31,7 +31,15 @@
 *.out
 *.app
 
+# Cmake stuff
 Makefile
 CMakeCache.txt
 cmake_install.cmake
+*/CMakeFiles
 /CMakeFiles
+
+# Glad folder  
+#/glad
+glad/libglad.a
+
+.DS_Store
