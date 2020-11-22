@@ -39,9 +39,11 @@ CMakeCache.txt
 cmake_install.cmake
 */CMakeFiles
 /CMakeFiles
+compile_commands.json
 
 # Glad folder  
 #/glad
 glad/libglad.a
+/glm
 
 .DS_Store

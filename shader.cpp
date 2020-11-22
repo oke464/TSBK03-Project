@@ -1,4 +1,4 @@
-#include <shader.h>
+#include "shader.h"
 
 
 //##############################
@@ -62,11 +62,11 @@ Shader::Shader(const char* vertexFileName, const char* fragmentFileName)
     glCompileShader(fragment);
     checkCompileErrors(fragment, "FRAGMENT");
     // shader Program
-    ShaderID = glCreateProgram();
-    glAttachShader(ShaderID, vertex);
-    glAttachShader(ShaderID, fragment);
-    glLinkProgram(ShaderID);
-    checkCompileErrors(ShaderID, "PROGRAM");
+    shaderID = glCreateProgram();
+    glAttachShader(shaderID, vertex);
+    glAttachShader(shaderID, fragment);
+    glLinkProgram(shaderID);
+    checkCompileErrors(shaderID, "PROGRAM");
     // delete the shaders as they're linked into our program now and no longer necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
@@ -75,22 +75,28 @@ Shader::Shader(const char* vertexFileName, const char* fragmentFileName)
 
 void Shader::useProgram() 
 { 
-    glUseProgram(ShaderID); 
+    glUseProgram(shaderID); 
 }
 
 void Shader::uploadBool(const std::string &name, bool value) const
 {         
-    glUniform1i(glGetUniformLocation(ShaderID, name.c_str()), (int)value); 
+    glUniform1i(glGetUniformLocation(shaderID, name.c_str()), (int)value); 
 }
 
 void Shader::uploadInt(const std::string &name, int value) const
 { 
-    glUniform1i(glGetUniformLocation(ShaderID, name.c_str()), value); 
+    glUniform1i(glGetUniformLocation(shaderID, name.c_str()), value); 
 }
 
 void Shader::uploadFloat(const std::string &name, float value) const
 { 
-    glUniform1f(glGetUniformLocation(ShaderID, name.c_str()), value); 
+    glUniform1f(glGetUniformLocation(shaderID, name.c_str()), value); 
+}
+
+void Shader::uploadMat4(const std::string &name, glm::mat4 matrix) const
+{
+    int matrixLoc = glGetUniformLocation(shaderID, name.c_str());
+    glUniformMatrix4fv(matrixLoc, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
 //##############################

@@ -1,9 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-
 // Selfwritten files
-#include <shader.h>
+#include "sandbox.h"
+#include "shader.h"
 
 // Create a sandbox/world class that can hold on all shaders and objects etc.
 
@@ -15,7 +15,6 @@ void initShaders();
 int main(void)
 {
     GLFWwindow* window = nullptr;
-    
     window = initGLFW_GLAD();
 
     if (!window)
@@ -24,7 +23,11 @@ int main(void)
         return -1;
     }
     
-    display(window);
+    Sandbox sandbox(window);
+
+    sandbox.display();
+
+    //display(window); Now done in sandbox! 
 
     glfwTerminate();
     return 0;
@@ -37,13 +40,14 @@ GLFWwindow* initGLFW_GLAD()
     if (!glfwInit())
         return nullptr;
 
+    // Must have this to get right version, plus compiling frameworks for mac. 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     #ifdef __APPLE__
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
-
+    
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(1080, 800, "Hello World", NULL, NULL);
     if (!window)
@@ -74,32 +78,37 @@ GLFWwindow* initGLFW_GLAD()
     return window;
 }
 
+
+/* Now done in sandbox
 // Simple input handling function
 void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
-
+*/ 
+/* Now done in sandbox! 
 void display(GLFWwindow* window)
 {
-    // Set backgroundcolor
-    glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
+    Sandbox sandbox = Sandbox();
 
-    initShaders();
-
-    /* Loop until the user closes the window */
+    // Loop until the user closes the window 
     while (!glfwWindowShouldClose(window))
     {
         // Handle inputs
         processInput(window);
-
-        // Render here 
-
-
+ 
+        // Set backgroundcolor
+        glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
 
         // Clear buffer 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Render here
+        sandbox.drawTriangle();
+
+        sandbox.drawQuad();
 
         // Swap front and back buffers 
         glfwSwapBuffers(window);
@@ -109,23 +118,5 @@ void display(GLFWwindow* window)
 
     }
 }
+*/
 
-
-// Add these to separate file later
-
-void drawTriangle()
-{
-    float vertices[] = 
-    {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f,  0.5f, 0.0f
-    }; 
-
-
-}
-
-void initShaders()
-{
-    Shader sandboxShader("sandboxShader.vert", "sandboxShader.frag");
-}
