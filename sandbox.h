@@ -43,7 +43,8 @@ private:
 
     static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
-
+    float yaw;
+    float pitch;
 
 };
 

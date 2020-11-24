@@ -47,6 +47,7 @@ GLFWwindow* initGLFW_GLAD()
     #ifdef __APPLE__
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
+    glfwWindowHint(GLFW_SAMPLES, 4);
     
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(1080, 800, "Real Time Particle Physics Simulation", NULL, NULL);

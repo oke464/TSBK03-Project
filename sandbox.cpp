@@ -24,7 +24,9 @@ Sandbox::Sandbox(GLFWwindow* window) :
     cameraUp{glm::vec3(0.0f, 1.0f,  0.0f)},
     quadModel{glm::rotate(glm::mat4{1.0f}, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f))},
     window{window},
-    bottomTiles{new Tiles(sandboxShader, 50, 30)}
+    bottomTiles{new Tiles(sandboxShader, 50, 30)},
+    yaw{-90.0f},
+    pitch{0.0f}
     
 
 {
@@ -43,9 +45,10 @@ Sandbox::~Sandbox()
 // Simple input handling function
 void Sandbox::processInput()
 {
+
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    
+
     const float cameraSpeed = 0.1f; // adjust accordingly
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         cameraPos += cameraSpeed * cameraFront;
@@ -61,6 +64,22 @@ void Sandbox::processInput()
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         cameraPos -= cameraSpeed * cameraUp;
     */
+    const float rotSpeed = 0.6f;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        yaw -= rotSpeed;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        yaw += rotSpeed;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        pitch -= rotSpeed;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        pitch += rotSpeed;
+    
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(front);
+
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 }
 
@@ -69,6 +88,7 @@ void Sandbox::display()
 {
     int count = 0;
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE); 
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
