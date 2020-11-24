@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 
 #include "shader.h"
+#include "tiles.h"
 
 class Sandbox
 {
@@ -24,7 +25,7 @@ public:
 
     Shader* sandboxShader{};
     glm::mat4 projection{};
-    glm::mat4 view{};
+    glm::mat4 view;
     glm::mat4 quadModel{};
 private:
     void initShaders();
@@ -34,6 +35,16 @@ private:
     unsigned int quadIndices[6]; // Used for EBO
 
     GLFWwindow* window{};
+    Tiles* bottomTiles{};
+
+    glm::vec3 cameraPos;
+    glm::vec3 cameraFront;
+    glm::vec3 cameraUp;
+
+    static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
+
+
 };
 
 #endif

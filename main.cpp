@@ -49,7 +49,7 @@ GLFWwindow* initGLFW_GLAD()
     #endif
     
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1080, 800, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(1080, 800, "Real Time Particle Physics Simulation", NULL, NULL);
     if (!window)
     {
         

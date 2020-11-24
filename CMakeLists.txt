@@ -16,6 +16,7 @@ add_executable(
     main.cpp
     shader.cpp
     sandbox.cpp
+    tiles.cpp
     )
 
 # --- Link GLAD lib ---

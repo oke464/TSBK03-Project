@@ -7,7 +7,6 @@ Sandbox::Sandbox(GLFWwindow* window) :
                     0.5f, -0.5f, 0.0f, // right 
                     0.0f,  0.5f, 0.0f  // top
                     },
-    sandboxShader{new Shader("sandboxShader.vert", "sandboxShader.frag")},
     quadVertices{
                 0.5f,  0.5f, 0.0f,  // top right
                 0.5f, -0.5f, 0.0f,  // bottom right
@@ -18,19 +17,27 @@ Sandbox::Sandbox(GLFWwindow* window) :
                 0, 1, 3,   // first triangle
                 1, 2, 3    // second triangle
                 },
+    sandboxShader{new Shader("sandboxShader.vert", "sandboxShader.frag")},
     projection{glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f)},
-    view{glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f))},
+    cameraPos{glm::vec3(0.0f, 5.0f,  3.0f)},
+    cameraFront{glm::vec3(0.0f, 0.0f, -1.0f)},
+    cameraUp{glm::vec3(0.0f, 1.0f,  0.0f)},
     quadModel{glm::rotate(glm::mat4{1.0f}, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f))},
-    window{window}
-
-{
+    window{window},
+    bottomTiles{new Tiles(sandboxShader, 50, 30)}
     
 
+{
+    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+    glfwSetWindowUserPointer(window, this);
+    glfwSetScrollCallback(window, scrollCallback);
 }
 
 Sandbox::~Sandbox()
 {
     delete sandboxShader;
+    delete bottomTiles;
 }
 
 // Simple input handling function
@@ -38,11 +45,29 @@ void Sandbox::processInput()
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    
+    const float cameraSpeed = 0.1f; // adjust accordingly
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    /*
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraUp;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraUp;
+    */
+    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 }
 
 // Main loop to display everything in scene.
 void Sandbox::display()
 {
+    int count = 0;
     glEnable(GL_DEPTH_TEST);
 
     /* Loop until the user closes the window */
@@ -57,7 +82,14 @@ void Sandbox::display()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // ### Render here #######
-        drawQuad();
+        //drawQuad();
+        //sandboxShader->useProgram(); // For now tileShader == sandboxShader
+        //sandboxShader->uploadMat4("projection", projection);
+        //sandboxShader->uploadMat4("view", view);
+    
+
+        bottomTiles->drawTiles(sandboxShader, projection, view);
+        //std::cout << glGetError() << std::endl;
 
         // #######################
 
@@ -65,7 +97,17 @@ void Sandbox::display()
         glfwSwapBuffers(window);
         // Poll for and process events 
         glfwPollEvents();
+        /*
+        if (count == 10)
+        {
+            break;
 
+        }
+        else 
+        {
+            count++;
+        }
+        */
     }
 }
 
@@ -144,4 +186,13 @@ void Sandbox::drawQuad()
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     // glBindVertexArray(0); // no need to unbind it every time 
+}
+
+// Scroll input
+void Sandbox::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    Sandbox* me = static_cast<Sandbox*>(glfwGetWindowUserPointer(window));
+    float speed = (float)(0.05 * yoffset);
+    me->cameraPos += speed * me->cameraUp;
+    me->view = glm::lookAt(me->cameraPos, me->cameraPos + me->cameraFront, me->cameraUp);
 }

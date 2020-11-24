@@ -36,6 +36,8 @@ public:
 
     void uploadMat4(const std::string &name, glm::mat4 matrix) const;
 
+    void uploadVec3(const std::string &name, glm::vec3 vector) const;
+
 private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
