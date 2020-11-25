@@ -14,8 +14,14 @@ Tiles::Tiles(Shader* shader, int rows, int colums) :
                 1, 2, 3    // second triangle
                 },
     quadOffset{1},
-    rotation{glm::rotate(glm::mat4{1.0f}, glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f))}//,
-    //tilesShader{shader}
+    rotation{glm::rotate(glm::mat4{1.0f}, glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f))},
+    VAO{},
+    VBO{},
+    EBO{},
+    modelMatrixBuffer{},
+    colorBuffer{},
+    amount{rows * colums},
+    tilesShader{shader}
 {
     bool colorToggle = true;
     // Generate transformation matrices and add to positionsmatrices for rows and colums.
@@ -46,6 +52,7 @@ Tiles::Tiles(Shader* shader, int rows, int colums) :
     // Init bind buffers
     //bindBuffers();
 
+    // Bind buffers for instancing
 }
 
 Tiles::~Tiles()
@@ -136,4 +143,63 @@ void Tiles::drawTiles(Shader* tilesShader, glm::mat4 projMat, glm::mat4 viewMat)
     //std::cout << glGetError() << std::endl;
     // glBindVertexArray(0); // no need to unbind it every time 
     */
+}
+
+void Tiles::bindBuffersInstanced()
+{
+    //Bind vertices
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    // Index buffer
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
+
+    // Bind colors 
+    glBindVertexArray(VAO);
+    glGenBuffers(1, &colorBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glVertexAttribDivisor(1, 1);
+
+    // Bind transformation matrices 
+    glGenBuffers(1, &modelMatrixBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, modelMatrixBuffer);
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &quadPositionMatrices[0], GL_STATIC_DRAW);
+    // Mat4 is 4 rows of vec4 so we have to upload 4 vec4 since attributes has a max size of vec4.
+    // Thus It will take up 4 attributes
+    glBindVertexArray(VAO);
+    // vertex attributes
+    std::size_t vec4Size = sizeof(glm::vec4);
+    glEnableVertexAttribArray(3); 
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+    glEnableVertexAttribArray(4); 
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
+    glEnableVertexAttribArray(5); 
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+    glEnableVertexAttribArray(6); 
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+    
+
+    glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
+
+    
+}
+
+void Tiles::drawTilesInstanced()
+{
+    tilesShader->useProgram();
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, amount); // 6 indices in index buffer object
+    glBindVertexArray(0);
 }

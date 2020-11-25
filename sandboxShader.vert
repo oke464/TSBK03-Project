@@ -1,5 +1,7 @@
 #version 330
-in vec3 aPos; // the position variable has attribute position 0
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aCol;
+layout (location = 3) in mat4 instanceMatrix;
   
 out vec4 vertexColor; // specify a color output to the fragment shader
 
@@ -11,6 +13,6 @@ uniform vec3 col;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(aPos, 1.0); // see how we directly give a vec3 to vec4's constructor
-    vertexColor = vec4(col, 1.0); // set the output variable to a dark-red color
+    gl_Position = projection * view * instanceMatrix * vec4(aPos, 1.0); 
+    vertexColor = vec4(aCol, 1.0); 
 }

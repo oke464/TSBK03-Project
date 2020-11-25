@@ -16,23 +16,29 @@ public:
 
     void bindBuffers();
     void drawTiles(Shader* tilesShader, glm::mat4 projMat, glm::mat4 viewMat);
+    void bindBuffersInstanced();
+    void drawTilesInstanced();
 
 private:
     float quadVertices[12];
     unsigned int quadIndices[6];
     float quadOffset;
 
-    glm::mat4 rotation{};
-    std::vector<glm::mat4> quadPositionMatrices{};
+    glm::mat4 rotation;
+    std::vector<glm::mat4> quadPositionMatrices;
 
-    std::vector<glm::vec3> colors{};
+    std::vector<glm::vec3> colors;
 
-    //Shader* tilesShader{};
+    unsigned int VAO;
+    unsigned int VBO;
+    unsigned int EBO;
 
-    
-    unsigned int VAO{};
-    unsigned int VBO{};
-    unsigned int EBO{};
+    unsigned int modelMatrixBuffer;
+    unsigned int colorBuffer;
+
+    int amount;
+
+    Shader* tilesShader{};
     
 };
 

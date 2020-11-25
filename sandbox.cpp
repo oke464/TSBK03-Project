@@ -24,7 +24,7 @@ Sandbox::Sandbox(GLFWwindow* window) :
     cameraUp{glm::vec3(0.0f, 1.0f,  0.0f)},
     quadModel{glm::rotate(glm::mat4{1.0f}, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f))},
     window{window},
-    bottomTiles{new Tiles(sandboxShader, 50, 30)},
+    bottomTiles{new Tiles(sandboxShader, 30, 50)},
     yaw{-90.0f},
     pitch{0.0f}
     
@@ -108,7 +108,14 @@ void Sandbox::display()
         //sandboxShader->uploadMat4("view", view);
     
 
-        bottomTiles->drawTiles(sandboxShader, projection, view);
+        //bottomTiles->drawTiles(sandboxShader, projection, view);
+        sandboxShader->useProgram();
+        sandboxShader->uploadMat4("projection", projection);
+        sandboxShader->uploadMat4("view", view);
+        
+        bottomTiles->bindBuffersInstanced();
+        bottomTiles->drawTilesInstanced();
+
         //std::cout << glGetError() << std::endl;
 
         // #######################
