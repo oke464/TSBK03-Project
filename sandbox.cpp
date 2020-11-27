@@ -1,6 +1,7 @@
 #include "sandbox.h"
 
 #include <iostream>
+#include <filesystem>
 
 Sandbox::Sandbox(GLFWwindow* window) :
     triangleVertices{-0.5f, -0.5f, 0.0f, // left  
@@ -26,7 +27,8 @@ Sandbox::Sandbox(GLFWwindow* window) :
     window{window},
     bottomTiles{new Tiles(sandboxShader, 30, 50)},
     yaw{-90.0f},
-    pitch{0.0f}
+    pitch{0.0f},
+    bunnyShader{new Shader("bunnyShader.vert", "bunnyShader.frag")}
     
 
 {
@@ -90,6 +92,14 @@ void Sandbox::display()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE); 
 
+    std::string sourcePath = __FILE__;
+    std::string dirPath = sourcePath.substr(0, sourcePath.rfind("/"));
+
+    std::string modelPath = std::string(dirPath);
+    modelPath.append("/").append("assets/models/stanford-bunny.obj");
+
+    Model bunnyModel(modelPath);
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -115,6 +125,18 @@ void Sandbox::display()
         
         bottomTiles->bindBuffersInstanced();
         bottomTiles->drawTilesInstanced();
+
+        bunnyShader->useProgram();
+        bunnyShader->uploadMat4("projection", projection);
+        bunnyShader->uploadMat4("view", view);
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));	// it's a bit too big for our scene, so scale it down
+        bunnyShader->uploadMat4("model", model);
+        bunnyModel.Draw(*bunnyShader);
+
+
+
 
         //std::cout << glGetError() << std::endl;
 

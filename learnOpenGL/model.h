@@ -1,3 +1,7 @@
+// This Shader class is based on the class from: 
+// https://learnopengl.com/code_viewer_gh.php?code=includes/learnopengl/model.h
+// 
+
 #ifndef MODEL_H
 #define MODEL_H
 
