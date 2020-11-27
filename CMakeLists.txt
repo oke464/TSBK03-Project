@@ -17,6 +17,7 @@ add_executable(
     shader.cpp
     sandbox.cpp
     tiles.cpp
+    stb/stb_image.cpp
     )
 
 # --- Link GLAD lib ---
