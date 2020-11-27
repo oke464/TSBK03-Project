@@ -3,7 +3,6 @@
 #include <iostream>
 // Selfwritten files
 #include "sandbox.h"
-#include "shader.h"
 
 // Create a sandbox/world class that can hold on all shaders and objects etc.
 

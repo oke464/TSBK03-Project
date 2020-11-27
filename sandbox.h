@@ -7,7 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
 
-#include "shader.h"
+#include "learnOpenGL/shader.h"
 #include "tiles.h"
 
 class Sandbox

@@ -14,10 +14,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_executable(
     Simulation 
     main.cpp
-    shader.cpp
+    learnOpenGL/shader.cpp
     sandbox.cpp
     tiles.cpp
     stb/stb_image.cpp
+    learnOpenGL/mesh.cpp
+    learnOpenGL/model.cpp
     )
 
 # --- Link GLAD lib ---
@@ -33,11 +35,15 @@ target_include_directories(Simulation PUBLIC
                           "${PROJECT_BINARY_DIR}" 
                           "${PROJECT_SOURCE_DIR}" 
                           /usr/local/Cellar/glm/0.9.9.8/include
+                          /usr/local/Cellar/assimp/5.0.1/include
                           )
 
 
 # --- Using GLFW binaries link library like this --
 find_package(glfw3 3.3 REQUIRED)
+
+set(assimp_DIR /usr/local/Cellar/assimp/5.0.1/lib/cmake/assimp-5.0)
+find_package(assimp 5.0 REQUIRED)
 
 target_link_libraries(
                     Simulation 
@@ -68,7 +74,7 @@ target_link_libraries(Simulation ${COCOA_LIBRARY} ${COREVID_LIBRARY} ${IOKIT_LIB
 
 IF(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework Cocoa -framework OpenGL -framework IOKit")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework Cocoa -framework OpenGL -framework IOKit /usr/local/lib/libassimp.dylib")
 ENDIF(APPLE)
 
 
