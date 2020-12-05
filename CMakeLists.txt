@@ -20,6 +20,7 @@ add_executable(
     stb/stb_image.cpp
     learnOpenGL/mesh.cpp
     learnOpenGL/model.cpp
+    object.cpp
     )
 
 # --- Link GLAD lib ---

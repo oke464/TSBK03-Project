@@ -1,7 +1,6 @@
 #include "sandbox.h"
 
 #include <iostream>
-#include <filesystem>
 
 Sandbox::Sandbox(GLFWwindow* window) :
     triangleVertices{-0.5f, -0.5f, 0.0f, // left  
@@ -28,7 +27,10 @@ Sandbox::Sandbox(GLFWwindow* window) :
     bottomTiles{new Tiles(sandboxShader, 30, 50)},
     yaw{-90.0f},
     pitch{0.0f},
-    bunnyShader{new Shader("bunnyShader.vert", "bunnyShader.frag")}
+    bunnyShader{new Shader("bunnyShader.vert", "bunnyShader.frag")},
+    bunny{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/stanford-bunny.obj")},
+    sphere{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/sphere.obj")},
+    cube{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/cubeplus.obj")}
     
 
 {
@@ -36,6 +38,8 @@ Sandbox::Sandbox(GLFWwindow* window) :
 
     glfwSetWindowUserPointer(window, this);
     glfwSetScrollCallback(window, scrollCallback);
+
+    
 }
 
 Sandbox::~Sandbox()
@@ -91,6 +95,7 @@ void Sandbox::display()
     int count = 0;
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE); 
+    /*
 
     std::string sourcePath = __FILE__;
     std::string dirPath = sourcePath.substr(0, sourcePath.rfind("/"));
@@ -99,7 +104,7 @@ void Sandbox::display()
     modelPath.append("/").append("assets/models/stanford-bunny.obj");
 
     Model bunnyModel(modelPath);
-
+    */
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -130,12 +135,33 @@ void Sandbox::display()
         bunnyShader->useProgram();
         bunnyShader->uploadMat4("projection", projection);
         bunnyShader->uploadMat4("view", view);
+        /*
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
         model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));	
         bunnyShader->uploadMat4("model", model);
-        bunnyModel.Draw(*bunnyShader);
+        */
+        //bunnyModel.Draw(*bunnyShader);
+        
+        bunny.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        bunny.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
+        bunny.updateTransformation();
+        bunnyShader->uploadMat4("model", bunny.getTransformation());
+        bunny.draw(*bunnyShader);
 
+        sphere.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        sphere.setScale(glm::vec3(1.0f, 1.0f, 1.0f));
+        sphere.updateTransformation();
+        bunnyShader->uploadMat4("model", sphere.getTransformation());
+        sphere.draw(*bunnyShader);
+        
+        cube.setPosition(glm::vec3(20.0f, 0.0f, 0.0f));
+        cube.setScale(glm::vec3(1.0f, 1.0f, 1.0f));
+        cube.updateTransformation();
+        bunnyShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*bunnyShader);
+        
+        
 
         //std::cout << glGetError() << std::endl;
 

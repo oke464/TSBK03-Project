@@ -10,6 +10,7 @@
 #include "learnOpenGL/shader.h"
 #include "tiles.h"
 #include "learnOpenGL/model.h"
+#include "object.h"
 
 class Sandbox
 {
@@ -48,6 +49,11 @@ private:
 
     float yaw;
     float pitch;
+
+    // TEMPORARY 
+    Sphere bunny;
+    Sphere cube;
+    Sphere sphere;
 
 };
 
