@@ -31,6 +31,7 @@ public:
     glm::mat4 quadModel{};
 
     Shader* bunnyShader;
+    Shader* depthShader;
 private:
     void initShaders();
 

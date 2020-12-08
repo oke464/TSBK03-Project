@@ -18,7 +18,6 @@ Sandbox::Sandbox(GLFWwindow* window) :
                 1, 2, 3    // second triangle
                 },
     sandboxShader{new Shader("sandboxShader.vert", "sandboxShader.frag")},
-    projection{glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f)},
     cameraPos{glm::vec3(0.0f, 5.0f,  3.0f)},
     cameraFront{glm::vec3(0.0f, 0.0f, -1.0f)},
     cameraUp{glm::vec3(0.0f, 1.0f,  0.0f)},
@@ -30,11 +29,17 @@ Sandbox::Sandbox(GLFWwindow* window) :
     bunnyShader{new Shader("bunnyShader.vert", "bunnyShader.frag")},
     bunny{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/stanford-bunny.obj")},
     sphere{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/sphere.obj")},
-    cube{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/cubeplus.obj")}
+    cube{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/cubeplus.obj")},
+    depthShader(new Shader("depthBufferTestShader.vert", "depthBufferTestShader.frag"))
     
 
 {
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+    // Window width Height
+    int wWidth, wHeight;
+    glfwGetWindowSize(window, &wWidth, &wHeight);
+    projection = glm::perspective(glm::radians(45.0f), (float)(wWidth / wHeight), 0.1f, 100.0f);
 
     glfwSetWindowUserPointer(window, this);
     glfwSetScrollCallback(window, scrollCallback);
@@ -95,6 +100,10 @@ void Sandbox::display()
     int count = 0;
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE); 
+
+    float prevTime = glfwGetTime();
+    glm::vec3 moveDir(0, 0, 0);//(0, 0, -1);
+    glm::vec3 transVec(0, 0, 0);
     /*
 
     std::string sourcePath = __FILE__;
@@ -131,37 +140,79 @@ void Sandbox::display()
         bottomTiles->bindBuffersInstanced();
         bottomTiles->drawTilesInstanced();
 
+
         // Draw bunny
         bunnyShader->useProgram();
         bunnyShader->uploadMat4("projection", projection);
         bunnyShader->uploadMat4("view", view);
-        /*
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
-        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));	
-        bunnyShader->uploadMat4("model", model);
-        */
-        //bunnyModel.Draw(*bunnyShader);
-        
+
         bunny.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
         bunny.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
         bunny.updateTransformation();
         bunnyShader->uploadMat4("model", bunny.getTransformation());
         bunny.draw(*bunnyShader);
-
+        
+        // Draw sphere
+        bunnyShader->useProgram();
+        bunnyShader->uploadMat4("projection", projection);
+        bunnyShader->uploadMat4("view", view);
         sphere.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
         sphere.setScale(glm::vec3(1.0f, 1.0f, 1.0f));
         sphere.updateTransformation();
         bunnyShader->uploadMat4("model", sphere.getTransformation());
         sphere.draw(*bunnyShader);
         
+        // Draw cube
+        bunnyShader->useProgram();
+        bunnyShader->uploadMat4("projection", projection);
+        bunnyShader->uploadMat4("view", view);
         cube.setPosition(glm::vec3(20.0f, 0.0f, 0.0f));
         cube.setScale(glm::vec3(1.0f, 1.0f, 1.0f));
         cube.updateTransformation();
         bunnyShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*bunnyShader);
+
+
+        //########### DEPTH TESTING STUFF
+         float t = glfwGetTime() * 100;
+
+        float currTime = glfwGetTime();
+        float deltaT = (currTime - prevTime) / 2;
+        prevTime = currTime;
+
+        //std::cout << deltaT << std::endl;
         
+        depthShader->useProgram();
+        // Create camera for depth buffer generator
+        glm::vec3 dPos(0, 0, 5);
+        glm::vec3 dFront(0, 0, -1);
+        glm::vec3 dUp(0, 1, 0);
+        glm::mat4 depthView = glm::lookAt(dPos, glm::vec3(0, 0, 0), dUp);
+        depthShader->uploadMat4("dView", depthView);
         
+        // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.
+        float left = -0.5f;
+        float right = 0.5f;
+        float bottom = -0.5f;
+        float top = 0.5f;
+        float near = 0.1f;
+        float far = 10.0f;
+        glm::mat4 depthProj = glm::ortho(left, right, bottom, top, near, far);
+        depthShader->uploadMat4("dProj", depthProj);
+        depthShader->uploadFloat("near", near);
+        depthShader->uploadFloat("far", far);
+
+        // Update translation vector dep on time
+        transVec += deltaT * moveDir;
+        std::cout << transVec.z << std::endl;
+
+        // Createe model = rot * trans 
+        glm::mat4 trans = glm::translate(glm::mat4(1.0f), transVec);
+        glm::mat4 model = glm::rotate(trans, glm::radians(t), glm::vec3(0, 1, 0));
+        depthShader->uploadMat4("model", model);
+        bunny.draw(*depthShader);
+        
+       
 
         //std::cout << glGetError() << std::endl;
 
