@@ -23,8 +23,7 @@ public:
     void display();
 
     void drawTriangle(); // Move these to separate handlers later
-    void drawQuad();        // Move these to separate handlers later
-    
+    void drawQuad();        // Move these to separate handlers later    
 
     Shader* sandboxShader{};
     glm::mat4 projection{};
@@ -36,6 +35,7 @@ public:
     Shader* cubeShader;
 private:
     void initShaders();
+    void genereteFBODepthTextures(Framebuffer FBO1, Framebuffer FBO2, Framebuffer FBO3, Framebuffer FBO4, Framebuffer FBO5, Framebuffer FBO6);
 
     float triangleVertices[9]; // Triangle has 3 vertices each 3 coordninates
     float quadVertices[12]; // Quad 4 vertices
