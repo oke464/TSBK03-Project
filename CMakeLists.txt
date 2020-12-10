@@ -21,6 +21,7 @@ add_executable(
     learnOpenGL/mesh.cpp
     learnOpenGL/model.cpp
     object.cpp
+    framebuffer.cpp
     )
 
 # --- Link GLAD lib ---

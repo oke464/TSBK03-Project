@@ -11,6 +11,7 @@
 #include "tiles.h"
 #include "learnOpenGL/model.h"
 #include "object.h"
+#include "framebuffer.h"
 
 class Sandbox
 {
@@ -32,6 +33,7 @@ public:
 
     Shader* bunnyShader;
     Shader* depthShader;
+    Shader* cubeShader;
 private:
     void initShaders();
 

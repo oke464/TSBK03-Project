@@ -30,7 +30,8 @@ Sandbox::Sandbox(GLFWwindow* window) :
     bunny{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/stanford-bunny.obj")},
     sphere{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/sphere.obj")},
     cube{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/cubeplus.obj")},
-    depthShader(new Shader("depthBufferTestShader.vert", "depthBufferTestShader.frag"))
+    depthShader(new Shader("depthBufferTestShader.vert", "depthBufferTestShader.frag")),
+    cubeShader(new Shader("cubeShader.vert", "cubeShader.frag"))
     
 
 {
@@ -104,6 +105,10 @@ void Sandbox::display()
     float prevTime = glfwGetTime();
     glm::vec3 moveDir(0, 0, 0);//(0, 0, -1);
     glm::vec3 transVec(0, 0, 0);
+
+    int wWidth, wHeight;
+    glfwGetWindowSize(window, &wWidth, &wHeight);
+    Framebuffer depthFBO(wWidth, wHeight);
     /*
 
     std::string sourcePath = __FILE__;
@@ -130,8 +135,60 @@ void Sandbox::display()
         //sandboxShader->useProgram(); // For now tileShader == sandboxShader
         //sandboxShader->uploadMat4("projection", projection);
         //sandboxShader->uploadMat4("view", view);
-    
 
+
+        //########### DEPTH TESTING STUFF
+         float t = glfwGetTime() * 100;
+
+        float currTime = glfwGetTime();
+        float deltaT = (currTime - prevTime) / 2;
+        prevTime = currTime;
+
+        //std::cout << deltaT << std::endl;
+        depthShader->useProgram();
+        // Bind FBO to get output.
+
+        // Create camera for depth buffer generator
+        glm::vec3 dPos(0, 0, 5);
+        glm::vec3 dFront(0, 0, -1);
+        glm::vec3 dUp(0, 1, 0);
+        glm::mat4 depthView = glm::lookAt(dPos, glm::vec3(0, 0, 0), dUp);
+        depthShader->uploadMat4("dView", depthView);
+        
+        // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.
+        float left = -0.5f;
+        float right = 0.5f;
+        float bottom = -0.5f;
+        float top = 0.5f;
+        float near = 0.1f;
+        float far = 10.0f;
+        glm::mat4 depthProj = glm::ortho(left, right, bottom, top, near, far);
+        depthShader->uploadMat4("dProj", depthProj);
+        depthShader->uploadFloat("near", near);
+        depthShader->uploadFloat("far", far);
+
+        // Update translation vector dep on time
+        transVec += deltaT * moveDir;
+        
+        //std::cout << transVec.z << std::endl;
+
+        // Createe model = rot * trans 
+        glm::mat4 trans = glm::translate(glm::mat4(1.0f), transVec);
+        glm::mat4 model = glm::rotate(trans, glm::radians(t), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
+        depthShader->uploadMat4("model", model);
+        
+        depthFBO.bindFBO();
+        // Set backgroundcolor
+        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        // Clear buffer, keep depth to use z-buffer in offscreen fbo
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Draw everything to offscreen buffer
+        bunny.draw(*depthShader);
+        // Binds default screen FB, do not really like this as a memberfunction
+        depthFBO.bindScreenFB(); 
+
+
+        // ################# Things in scene
         //bottomTiles->drawTiles(sandboxShader, projection, view);
         sandboxShader->useProgram();
         sandboxShader->uploadMat4("projection", projection);
@@ -161,58 +218,45 @@ void Sandbox::display()
         sphere.updateTransformation();
         bunnyShader->uploadMat4("model", sphere.getTransformation());
         sphere.draw(*bunnyShader);
-        
+
+/*  This is example to load texture
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        // set the texture wrapping/filtering options (on the currently bound texture object)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        // load and generate the texture
+        int width, height, nrChannels;
+        unsigned char *data = stbi_load("assets/textures/maskros512.tga", &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            
+        }
+        else
+        {
+            std::cout << "Failed to load texture" << std::endl;
+        }
+        stbi_image_free(data);
+*/      
         // Draw cube
-        bunnyShader->useProgram();
-        bunnyShader->uploadMat4("projection", projection);
-        bunnyShader->uploadMat4("view", view);
-        cube.setPosition(glm::vec3(20.0f, 0.0f, 0.0f));
-        cube.setScale(glm::vec3(1.0f, 1.0f, 1.0f));
+        cubeShader->useProgram();
+
+        // set active texture to the one from fbo
+        depthFBO.bindTex(cubeShader, "texUnit", 0);
+
+        // Upload matrices and draw cube
+        cubeShader->uploadMat4("projection", projection);
+        cubeShader->uploadMat4("view", view);
+        cube.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+        cube.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
         cube.updateTransformation();
-        bunnyShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*bunnyShader);
+        cubeShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*cubeShader);
 
-
-        //########### DEPTH TESTING STUFF
-         float t = glfwGetTime() * 100;
-
-        float currTime = glfwGetTime();
-        float deltaT = (currTime - prevTime) / 2;
-        prevTime = currTime;
-
-        //std::cout << deltaT << std::endl;
-        
-        depthShader->useProgram();
-        // Create camera for depth buffer generator
-        glm::vec3 dPos(0, 0, 5);
-        glm::vec3 dFront(0, 0, -1);
-        glm::vec3 dUp(0, 1, 0);
-        glm::mat4 depthView = glm::lookAt(dPos, glm::vec3(0, 0, 0), dUp);
-        depthShader->uploadMat4("dView", depthView);
-        
-        // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.
-        float left = -0.5f;
-        float right = 0.5f;
-        float bottom = -0.5f;
-        float top = 0.5f;
-        float near = 0.1f;
-        float far = 10.0f;
-        glm::mat4 depthProj = glm::ortho(left, right, bottom, top, near, far);
-        depthShader->uploadMat4("dProj", depthProj);
-        depthShader->uploadFloat("near", near);
-        depthShader->uploadFloat("far", far);
-
-        // Update translation vector dep on time
-        transVec += deltaT * moveDir;
-        std::cout << transVec.z << std::endl;
-
-        // Createe model = rot * trans 
-        glm::mat4 trans = glm::translate(glm::mat4(1.0f), transVec);
-        glm::mat4 model = glm::rotate(trans, glm::radians(t), glm::vec3(0, 1, 0));
-        depthShader->uploadMat4("model", model);
-        bunny.draw(*depthShader);
-        
-       
 
         //std::cout << glGetError() << std::endl;
 
@@ -222,17 +266,6 @@ void Sandbox::display()
         glfwSwapBuffers(window);
         // Poll for and process events 
         glfwPollEvents();
-        /*
-        if (count == 10)
-        {
-            break;
-
-        }
-        else 
-        {
-            count++;
-        }
-        */
     }
 }
 

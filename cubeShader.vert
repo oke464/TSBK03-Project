@@ -5,16 +5,18 @@ layout (location = 2) in vec2 aTexCoords;
 
 out vec4 vertexColor; // specify a color output to the fragment shader
 out vec3 outNormal;
+out vec2 outTexCoord;
 
 uniform mat4 model;
-uniform mat4 dView;
-uniform mat4 dProj;
+uniform mat4 view;
+uniform mat4 projection;
+
 
 void main()
 {
-    gl_Position = dProj * dView * model * vec4(aPos, 1.0); 
+    gl_Position = projection * view * model * vec4(aPos, 1.0); 
 
+    outTexCoord = aTexCoords;
     outNormal = aNormal;
-
-    vertexColor = vec4(1, 1, 1, 1.0); 
+    vertexColor = vec4(1,1,1, 1.0); 
 }
