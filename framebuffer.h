@@ -4,9 +4,8 @@
 
 #include <glad/glad.h>
 #include <string>
+
 #include "learnOpenGL/shader.h"
-
-
 
 class Framebuffer
 {

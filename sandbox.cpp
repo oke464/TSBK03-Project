@@ -31,7 +31,8 @@ Sandbox::Sandbox(GLFWwindow* window) :
     sphere{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/sphere.obj")},
     cube{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/cubeplus.obj")},
     depthShader(new Shader("depthBufferTestShader.vert", "depthBufferTestShader.frag")),
-    cubeShader(new Shader("cubeShader.vert", "cubeShader.frag"))
+    cubeShader(new Shader("cubeShader.vert", "cubeShader.frag")),
+    voxHandler{new VoxelHandler(window)}
     
 
 {
@@ -52,6 +53,10 @@ Sandbox::~Sandbox()
 {
     delete sandboxShader;
     delete bottomTiles;
+    delete bunnyShader;
+    delete depthShader;
+    delete cubeShader;
+    delete voxHandler;
 }
 
 // Simple input handling function
@@ -115,6 +120,9 @@ void Sandbox::display()
     Framebuffer depthFBO_ZGreater(wWidth, wHeight);
     Framebuffer depthFBO_YGreater(wWidth, wHeight);
     Framebuffer depthFBO_XGreater(wWidth, wHeight);
+
+
+    Framebuffer voxBuffer = voxHandler->getFBO();
     /*
 
     std::string sourcePath = __FILE__;
@@ -142,15 +150,13 @@ void Sandbox::display()
         //sandboxShader->uploadMat4("projection", projection);
         //sandboxShader->uploadMat4("view", view);
 
-
-        
-         float t = glfwGetTime() * 100;
+        float t = glfwGetTime() * 100;
 
         float currTime = glfwGetTime();
         float deltaT = (currTime - prevTime) / 2;
         prevTime = currTime;
 
-
+        // This generates textures with depth data
         genereteFBODepthTextures(depthFBO_X, depthFBO_Y, depthFBO_Z, depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
 
         glDepthFunc(GL_LESS);
@@ -287,7 +293,8 @@ void Sandbox::initShaders()
 
 }
 
-void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater)
+void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
+                Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater)
 {
             // ----------- DEPTH TESTING STUFF ----------------
         //std::cout << deltaT << std::endl;

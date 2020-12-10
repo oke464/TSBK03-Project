@@ -12,6 +12,7 @@
 #include "learnOpenGL/model.h"
 #include "object.h"
 #include "framebuffer.h"
+#include "voxelhandler.h"
 
 class Sandbox
 {
@@ -36,6 +37,7 @@ public:
 private:
     void initShaders();
     void genereteFBODepthTextures(Framebuffer FBO1, Framebuffer FBO2, Framebuffer FBO3, Framebuffer FBO4, Framebuffer FBO5, Framebuffer FBO6);
+    static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
     float triangleVertices[9]; // Triangle has 3 vertices each 3 coordninates
     float quadVertices[12]; // Quad 4 vertices
@@ -47,11 +49,10 @@ private:
     glm::vec3 cameraPos;
     glm::vec3 cameraFront;
     glm::vec3 cameraUp;
-
-    static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-
     float yaw;
     float pitch;
+
+    VoxelHandler* voxHandler;
 
     // TEMPORARY 
     Sphere bunny;
