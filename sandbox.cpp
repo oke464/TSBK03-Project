@@ -108,7 +108,13 @@ void Sandbox::display()
 
     int wWidth, wHeight;
     glfwGetWindowSize(window, &wWidth, &wHeight);
-    Framebuffer depthFBO(wWidth, wHeight);
+    
+    Framebuffer depthFBO_Z(wWidth, wHeight);
+    Framebuffer depthFBO_Y(wWidth, wHeight);
+    Framebuffer depthFBO_X(wWidth, wHeight);
+    Framebuffer depthFBO_ZGreater(wWidth, wHeight);
+    Framebuffer depthFBO_YGreater(wWidth, wHeight);
+    Framebuffer depthFBO_XGreater(wWidth, wHeight);
     /*
 
     std::string sourcePath = __FILE__;
@@ -137,13 +143,15 @@ void Sandbox::display()
         //sandboxShader->uploadMat4("view", view);
 
 
-        //########### DEPTH TESTING STUFF
+        
          float t = glfwGetTime() * 100;
 
         float currTime = glfwGetTime();
         float deltaT = (currTime - prevTime) / 2;
         prevTime = currTime;
 
+
+        // ----------- DEPTH TESTING STUFF ----------------
         //std::cout << deltaT << std::endl;
         depthShader->useProgram();
         // Bind FBO to get output.
@@ -160,7 +168,7 @@ void Sandbox::display()
         float right = 0.5f;
         float bottom = -0.5f;
         float top = 0.5f;
-        float near = 0.1f;
+        float near = 0.0f;
         float far = 10.0f;
         glm::mat4 depthProj = glm::ortho(left, right, bottom, top, near, far);
         depthShader->uploadMat4("dProj", depthProj);
@@ -169,26 +177,164 @@ void Sandbox::display()
 
         // Update translation vector dep on time
         transVec += deltaT * moveDir;
-        
         //std::cout << transVec.z << std::endl;
-
-        // Createe model = rot * trans 
-        glm::mat4 trans = glm::translate(glm::mat4(1.0f), transVec);
-        glm::mat4 model = glm::rotate(trans, glm::radians(t), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
-        depthShader->uploadMat4("model", model);
         
-        depthFBO.bindFBO();
+
+        // --- Draw model 3 times rotated along axises one time with depth func 
+        // greater and one with less to get depth values from each side. 
+        // Create model = rot * trans 
+        glm::mat4 trans = glm::translate(glm::mat4(1.0f), transVec);
+
+        // Rotation to Z direction
+        glm::mat4 modelDirZ = glm::rotate(trans, glm::radians(0.0f), glm::vec3(0, 0, 1)); // Set t in radians to rotate object.
+
+        // Rotation to X direction
+        glm::mat4 modelDirX = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
+
+        // Rotation to Y direction
+        glm::mat4 modelDirY = glm::rotate(trans, glm::radians(90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
+        
+
+        // --- Bind each FBO and draw accordingly
+        // *** With setting less on*
+        // Depthbuffer settings
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);   // Make closest fragments pass, (nearest)
+        glClearDepth(1.0);      // Let fragments less than 1 pass
+
+        depthFBO_Z.bindFBO();
+        // Upload rot matrix
+        depthShader->uploadMat4("model", modelDirZ);
         // Set backgroundcolor
         glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
         // Clear buffer, keep depth to use z-buffer in offscreen fbo
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Draw everything to offscreen buffer
         bunny.draw(*depthShader);
-        // Binds default screen FB, do not really like this as a memberfunction
-        depthFBO.bindScreenFB(); 
+
+        depthFBO_X.bindFBO();
+        // Upload rot matrix
+        depthShader->uploadMat4("model", modelDirX);
+        // Set backgroundcolor
+        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        // Clear buffer, keep depth to use z-buffer in offscreen fbo
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Draw everything to offscreen buffer
+        bunny.draw(*depthShader);
+
+        depthFBO_Y.bindFBO();
+        // Upload rot matrix
+        depthShader->uploadMat4("model", modelDirY);
+        // Set backgroundcolor
+        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        // Clear buffer, keep depth to use z-buffer in offscreen fbo
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Draw everything to offscreen buffer
+        bunny.draw(*depthShader);
+        // *** 
+
+        // *** With setting greater on*
+        // Depthbuffer settings
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_GREATER);    // Make furthest fragments pass, (nearest)
+        glClearDepth(0.0);          // Have to set depth test to zero else nothing will pass
+
+        depthFBO_ZGreater.bindFBO();
+        // Upload rot matrix
+        depthShader->uploadMat4("model", modelDirZ);
+        // Set backgroundcolor
+        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        // Clear buffer, keep depth to use z-buffer in offscreen fbo
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Draw everything to offscreen buffer
+        bunny.draw(*depthShader);
+
+        depthFBO_XGreater.bindFBO();
+        // Upload rot matrix
+        depthShader->uploadMat4("model", modelDirX);
+        // Set backgroundcolor
+        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        // Clear buffer, keep depth to use z-buffer in offscreen fbo
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Draw everything to offscreen buffer
+        bunny.draw(*depthShader);
+
+        depthFBO_YGreater.bindFBO();
+        // Upload rot matrix
+        depthShader->uploadMat4("model", modelDirY);
+        // Set backgroundcolor
+        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        // Clear buffer, keep depth to use z-buffer in offscreen fbo
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Draw everything to offscreen buffer
+        bunny.draw(*depthShader);
+        // *** 
+
+        // Binds default screen FB back, do not really like this as a memberfunction
+        depthFBO_Z.bindScreenFB(); 
+        // ------------------------------------
+
+        glDepthFunc(GL_LESS);
+        glClearDepth(1.0);
+        // ----------- Display FBO textures to cube ------------
+        // Draw cube
+        cubeShader->useProgram();
+
+        // Upload matrices and draw cube
+        cubeShader->uploadMat4("projection", projection);
+        cubeShader->uploadMat4("view", view);
+        cube.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
+
+        // *** Textures with setting depth test less ***
+        cube.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+        cube.updateTransformation();
+        // set active texture to the one from fbo
+        depthFBO_Z.bindTex(cubeShader, "texUnit", 0);
+        cubeShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*cubeShader);
+        
+        cube.setPosition(glm::vec3(10.0f, 0.0f, 0.0f));
+        cube.updateTransformation();
+        // set active texture to the one from fbo
+        depthFBO_X.bindTex(cubeShader, "texUnit", 0);
+        cubeShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*cubeShader);
+        
+        cube.setPosition(glm::vec3(15.0f, 0.0f, 0.0f));
+        cube.updateTransformation();
+        // set active texture to the one from fbo
+        depthFBO_Y.bindTex(cubeShader, "texUnit", 0);
+        cubeShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*cubeShader);
+        // *** 
+
+        // *** Textures with setting depth test greater ***
+        cube.setPosition(glm::vec3(5.0f, 0.0f, -5.0f));
+        cube.updateTransformation();
+        // set active texture to the one from fbo
+        depthFBO_ZGreater.bindTex(cubeShader, "texUnit", 0);
+        cubeShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*cubeShader);
+        
+        cube.setPosition(glm::vec3(10.0f, 0.0f, -5.0f));
+        cube.updateTransformation();
+        // set active texture to the one from fbo
+        depthFBO_XGreater.bindTex(cubeShader, "texUnit", 0);
+        cubeShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*cubeShader);
+        
+        cube.setPosition(glm::vec3(15.0f, 0.0f, -5.0f));
+        cube.updateTransformation();
+        // set active texture to the one from fbo
+        depthFBO_YGreater.bindTex(cubeShader, "texUnit", 0);
+        cubeShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*cubeShader);
+        // *** 
+
+        // ------------------------------------
 
 
-        // ################# Things in scene
+        // ------------ Things in scene ----------------------
         //bottomTiles->drawTiles(sandboxShader, projection, view);
         sandboxShader->useProgram();
         sandboxShader->uploadMat4("projection", projection);
@@ -196,7 +342,6 @@ void Sandbox::display()
         
         bottomTiles->bindBuffersInstanced();
         bottomTiles->drawTilesInstanced();
-
 
         // Draw bunny
         bunnyShader->useProgram();
@@ -218,6 +363,8 @@ void Sandbox::display()
         sphere.updateTransformation();
         bunnyShader->uploadMat4("model", sphere.getTransformation());
         sphere.draw(*bunnyShader);
+
+        // ------------------------------------
 
 /*  This is example to load texture
         unsigned int texture;
@@ -242,20 +389,7 @@ void Sandbox::display()
         }
         stbi_image_free(data);
 */      
-        // Draw cube
-        cubeShader->useProgram();
 
-        // set active texture to the one from fbo
-        depthFBO.bindTex(cubeShader, "texUnit", 0);
-
-        // Upload matrices and draw cube
-        cubeShader->uploadMat4("projection", projection);
-        cubeShader->uploadMat4("view", view);
-        cube.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
-        cube.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
-        cube.updateTransformation();
-        cubeShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*cubeShader);
 
 
         //std::cout << glGetError() << std::endl;
