@@ -1,27 +1,19 @@
 #version 330
 out vec4 FragColor;
-in vec3 outNormal;
 
 in vec4 vertexColor; // the input variable from the vertex shader (same name and same type)  
-
-in vec2 outTexCoord;
-
-uniform sampler2D texFBOX;
-uniform sampler2D texFBOY;
-uniform sampler2D texFBOZ;
-uniform sampler2D texFBOXGreater;
-uniform sampler2D texFBOYGreater;
-uniform sampler2D texFBOZGreater;
-
-uniform float voxelRadius;
 
 uniform float near;
 uniform float far;
 
-uniform int INIT;
+uniform sampler2D texFBOY;
+
+in vec2 outTexCoord;
+//uniform int INIT;
 
 void main()
 {
+    int INIT = 0;
     // -------Fetch depth data from textures and write to FBO---------
     if (INIT == 1)
     {
@@ -30,11 +22,12 @@ void main()
         //      a far*far*far box with coordinates, spaced with 2*radius. Then a voxel box/sphere can be placed on each position later.
         // Set upload INIT = 1 when we want to init. 
         // Maybe have a separate texture only for initialized texture, then copy all to another texture which is voxelpos texture.
-        // 
+        // Upload Texture coordinates manually. The texture coord steps will be 1/texWidth or 1/texHeight if texcoord 0->1 in both dirs.
+
         float x = near;
         float y = near;
         float z = near;
-        float active = 0; // Let 0 be inactive
+        float activeVoxel = 0; // Let alpha=0 be inactive
         
         // Fill a far*far*far box with coordinates, spaced with 2*radius
         while (z < far)
@@ -59,6 +52,6 @@ void main()
 
     }
     
-    FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
+    FragColor = vertexColor;//texture(texFBOY, outTexCoord);
     // -------------------------------------------------
 } 

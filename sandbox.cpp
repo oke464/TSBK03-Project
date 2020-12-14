@@ -32,7 +32,7 @@ Sandbox::Sandbox(GLFWwindow* window) :
     cube{Sphere(glm::vec3(0.0f, 0.0f, 0.0f), "assets/models/cubeplus.obj")},
     depthShader(new Shader("depthBufferTestShader.vert", "depthBufferTestShader.frag")),
     cubeShader(new Shader("cubeShader.vert", "cubeShader.frag")),
-    voxHandler{new VoxelHandler(window)}
+    voxHandler{new VoxelHandler(window, "assets/models/cubeplus.obj", 0.5f)}
     
 
 {
@@ -161,6 +161,12 @@ void Sandbox::display()
 
         glDepthFunc(GL_LESS);
         glClearDepth(1.0);
+
+        //voxHandler->drawVoxelGrid(view, projection);
+        voxHandler->drawVoxelizedModel(view, projection, 
+            depthFBO_X, depthFBO_Y, depthFBO_Z, 
+            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+/*
         // ----------- Display FBO textures to cube ------------
         // Draw cube
         cubeShader->useProgram();
@@ -215,6 +221,18 @@ void Sandbox::display()
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
         // *** 
+
+
+
+*/
+
+        // *** Texting voxel inits
+        cube.setPosition(glm::vec3(20.0f, 0.0f, -5.0f));
+        cube.updateTransformation();
+        // set active texture to the one from fbo
+        voxHandler->getInitFBO().bindTex(cubeShader, "texUnit", 0);
+        cubeShader->uploadMat4("model", cube.getTransformation());
+        cube.draw(*cubeShader);
 
         // ------------------------------------
 

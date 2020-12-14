@@ -1,4 +1,4 @@
-// This Shader class is based on the class from: 
+// This model class is based on the class from: 
 // https://learnopengl.com/code_viewer_gh.php?code=includes/learnopengl/model.h
 // 
 
