@@ -122,7 +122,12 @@ void Sandbox::display()
     Framebuffer depthFBO_XGreater(wWidth, wHeight);
 
 
-    Framebuffer voxBuffer = voxHandler->getFBO();
+    // This generates textures with depth data
+    genereteFBODepthTextures(depthFBO_X, depthFBO_Y, depthFBO_Z, depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+
+    glDepthFunc(GL_LESS);
+    glClearDepth(1.0);
+    
     /*
 
     std::string sourcePath = __FILE__;
@@ -156,17 +161,23 @@ void Sandbox::display()
         float deltaT = (currTime - prevTime) / 2;
         prevTime = currTime;
 
-        // This generates textures with depth data
-        genereteFBODepthTextures(depthFBO_X, depthFBO_Y, depthFBO_Z, depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
-
-        glDepthFunc(GL_LESS);
-        glClearDepth(1.0);
 
         //voxHandler->drawVoxelGrid(view, projection);
+/*
         voxHandler->drawVoxelizedModel(view, projection, 
             depthFBO_X, depthFBO_Y, depthFBO_Z, 
             depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
-/*
+
+*/
+         
+        voxHandler->genVoxelPositions(view, projection, 
+            depthFBO_X, depthFBO_Y, depthFBO_Z, 
+            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+
+        
+        voxHandler->drawVoxelModel(view, projection, 
+            depthFBO_X, depthFBO_Y, depthFBO_Z, 
+            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
         // ----------- Display FBO textures to cube ------------
         // Draw cube
         cubeShader->useProgram();
@@ -180,6 +191,7 @@ void Sandbox::display()
         cube.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
+        glActiveTexture(GL_TEXTURE0);
         depthFBO_Z.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
@@ -187,6 +199,7 @@ void Sandbox::display()
         cube.setPosition(glm::vec3(10.0f, 0.0f, 0.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
+        glActiveTexture(GL_TEXTURE0);
         depthFBO_X.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
@@ -194,6 +207,7 @@ void Sandbox::display()
         cube.setPosition(glm::vec3(15.0f, 0.0f, 0.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
+        glActiveTexture(GL_TEXTURE0);
         depthFBO_Y.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
@@ -203,6 +217,7 @@ void Sandbox::display()
         cube.setPosition(glm::vec3(5.0f, 0.0f, -5.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
+        glActiveTexture(GL_TEXTURE0);
         depthFBO_ZGreater.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
@@ -210,6 +225,7 @@ void Sandbox::display()
         cube.setPosition(glm::vec3(10.0f, 0.0f, -5.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
+        glActiveTexture(GL_TEXTURE0);
         depthFBO_XGreater.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
@@ -217,6 +233,7 @@ void Sandbox::display()
         cube.setPosition(glm::vec3(15.0f, 0.0f, -5.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
+        glActiveTexture(GL_TEXTURE0);
         depthFBO_YGreater.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
@@ -224,12 +241,13 @@ void Sandbox::display()
 
 
 
-*/
+
 
         // *** Texting voxel inits
         cube.setPosition(glm::vec3(20.0f, 0.0f, -5.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
+        glActiveTexture(GL_TEXTURE0);
         voxHandler->getInitFBO().bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
