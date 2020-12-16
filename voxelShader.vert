@@ -55,8 +55,8 @@ void main()
     }
     gl_Position = dProj * dView * voxMod * vec4(aPos, 1.0); 
     //outVoxelPos = aVoxelPos; 
-    //vertexColor = vec4(voxPos.x, voxPos.y, voxPos.z, 1);
-    vertexColor = x_min;
+    vertexColor = vec4(voxPos.x, voxPos.y, -voxPos.z, 1) / 10; // Set minus on z-component since it's position is negative so color will be zero.
+    //vertexColor = x_min;
 
 
     
