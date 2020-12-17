@@ -59,6 +59,7 @@ private:
     Sphere bunny;
     Sphere cube;
     Sphere sphere;
+    bool bunnyToggle;
 
 };
 
