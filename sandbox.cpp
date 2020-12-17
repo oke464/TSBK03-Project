@@ -169,7 +169,7 @@ void Sandbox::display()
             depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
 
 */
-         
+        
         voxHandler->genVoxelPositions(view, projection, 
             depthFBO_X, depthFBO_Y, depthFBO_Z, 
             depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
@@ -178,6 +178,8 @@ void Sandbox::display()
         voxHandler->drawVoxelModel(view, projection, 
             depthFBO_X, depthFBO_Y, depthFBO_Z, 
             depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+
+/*
         // ----------- Display FBO textures to cube ------------
         // Draw cube
         cubeShader->useProgram();
@@ -240,11 +242,16 @@ void Sandbox::display()
         // *** 
 
 
-
+*/
 
 
         // *** Texting voxel inits
-        cube.setPosition(glm::vec3(20.0f, 0.0f, -5.0f));
+        cubeShader->useProgram();
+        // Upload matrices and draw cube
+        cubeShader->uploadMat4("projection", projection);
+        cubeShader->uploadMat4("view", view);
+        cube.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
+        cube.setPosition(glm::vec3(5.0f, 5.0f, -10.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);

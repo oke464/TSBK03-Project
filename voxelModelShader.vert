@@ -28,7 +28,7 @@ void main()
     if(texPos.a == 1)
     {
         gl_Position = dProj * dView * voxMod * vec4(aPos, 1.0); 
-        vertexColor = texPos;   
+        vertexColor = vec4(texPos.xy, -texPos.z, 1.0);   
            
     }
     //gl_Position = dProj * dView * voxMod * vec4(aPos, 1.0); 
