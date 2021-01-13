@@ -23,18 +23,17 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
                 -1.0f,  1.0f, 0.0f   // top left 
                 },
         
-       /*
-        quadVertices{
-                0.5f,  0.5f, 0.0f,  // top right
-                0.5f, -0.5f, 0.0f,  // bottom right
-                -0.5f, -0.5f, 0.0f,  // bottom left
-                -0.5f,  0.5f, 0.0f   // top left 
-                },
-        */
+       
+        //quadVertices{ -1,-1,0, -1,1, 0, 1,1, 0, 1,-1, 0},
+        
+       
         quadIndices{  
                     0, 1, 3,   // first triangle
                     1, 2, 3    // second triangle
                     },
+       
+       //quadIndices{0, 1, 2, 0, 2, 3},
+
         voxelRadius{modelRadius},
         squareTexCoord{ 
                         0, 0,
@@ -153,7 +152,8 @@ void VoxelHandler::genVoxelPositions(glm::mat4 view, glm::mat4 proj, Framebuffer
     voxelPosFBO.bindFBO();
     //voxelPosFBO.bindScreenFB();
     // Clear buffer, keep depth to use z-buffer in offscreen fbo
-    glClearColor(0,1,0,0);
+    // Set aplha to 0 because if voxelModelShader checks if alpha == 1 to know if voxel is active
+    glClearColor(0,1,0,0); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     voxelInitShader->useProgram();
@@ -200,8 +200,10 @@ void VoxelHandler::bindBuffersInstanced()
     // A great thing about structs is that their memory layout is sequential for all its items.
     // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
     // again translates to 3/2 floats which translates to a byte array.
-    glBufferData(GL_ARRAY_BUFFER, voxelModel.meshes[0].vertices.size() * sizeof(Vertex), &voxelModel.meshes[0].vertices[0], GL_STATIC_DRAW);  
 
+    // Fetching the data hardcoded like this is a hack to utilized the model loader, note that we get the first index, this works 
+    // because we only have one mesh for a square, don't know what happens if we were to have multiple meshes. 
+    glBufferData(GL_ARRAY_BUFFER, voxelModel.meshes[0].vertices.size() * sizeof(Vertex), &voxelModel.meshes[0].vertices[0], GL_STATIC_DRAW);  
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, voxelModel.meshes[0].indices.size() * sizeof(unsigned int), &voxelModel.meshes[0].indices[0], GL_STATIC_DRAW);
     
@@ -221,7 +223,6 @@ void VoxelHandler::bindBuffersInstanced()
     glEnableVertexAttribArray(4);
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
     
-    glVertexAttribDivisor(2, 1);
 
     // Bind positions 
     glBindVertexArray(VAO);
@@ -278,21 +279,21 @@ void VoxelHandler::bindInitBuffersInstanced()
     glEnableVertexAttribArray(0);	
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     
-    glBindVertexArray(VAO2);
+
     glGenBuffers(1, &squareTexCoordBuffer2);
     glBindBuffer(GL_ARRAY_BUFFER, squareTexCoordBuffer2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(squareTexCoord), &squareTexCoord[0], GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER, sizeof(squareTexCoord), squareTexCoord, GL_STATIC_DRAW);  
     // vertex texture coords
     glEnableVertexAttribArray(2);	
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
    
     glVertexAttribDivisor(2, 1);
 
-    glBindVertexArray(VAO2);
+   
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
     
-    glBindVertexArray(VAO2);
+    
     // Bind transformation matrices 
     glGenBuffers(1, &modelMatrixBuffer2);
     glBindBuffer(GL_ARRAY_BUFFER, modelMatrixBuffer2);
@@ -418,10 +419,14 @@ void VoxelHandler::drawVoxelModel(glm::mat4 view, glm::mat4 proj, Framebuffer FB
     glActiveTexture(GL_TEXTURE0);
     voxelPosFBO.bindTex(voxelModelShader, "voxPosTex", 0);
 
-    // Create camera for depth buffer generator
+    //###!!! Remove later
+    glActiveTexture(GL_TEXTURE1);
+    FBOY.bindTex(voxelModelShader, "texFBOY", 1);
+
+    // Pass sandbox camera
     voxelModelShader->uploadMat4("dView", view);
     
-    // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.        
+    // Pass sandbox projection. don't think near and far are used.      
     float near = 0.0f;
     float far = 10.0f;
     voxelModelShader->uploadMat4("dProj", proj);

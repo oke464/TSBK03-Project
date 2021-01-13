@@ -12,12 +12,15 @@ uniform mat4 dProj;
 
 uniform sampler2D voxPosTex;
 
+out vec2 outTexCoord;
 
 
 // Use gl_InstanceID for getting the instnace number
 
 void main()
 {
+    outTexCoord = aTexCoords;
+
     // Get the color on position of the instance number
     // Texture sampled from is amount of voxels in width and 1 in height,
     // so we should be able to sample at constant y=0, i.e first value.

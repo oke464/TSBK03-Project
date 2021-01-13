@@ -31,5 +31,10 @@ void main()
     translate[2][2] = 1;
     translate[3][3] = 1;
     vec4 newpos = translate * vec4(aPos, 1.0);
+
+    // Uncomment if we want to pass voxel position colors
     gl_Position = vec4(newpos);    
+    
+    // Uncomment if want to pass texture only
+    //gl_Position = vec4(aPos, 1.0); 
 }
