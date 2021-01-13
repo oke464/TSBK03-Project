@@ -50,6 +50,7 @@ void Framebuffer::bindFBO()
 void Framebuffer::bindScreenFB()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, 1080, 800);
 }
 
 // Remember to activate correct tex to corresponing texunit beforehand with glActiveTexture(GL_TEXTURE0);
