@@ -54,10 +54,13 @@ private:
 
     VoxelHandler* voxHandler;
 
+    bool bunnyToggle;
     // TEMPORARY 
     Sphere bunny;
     Sphere cube;
     Sphere sphere;
+
+
 
 };
 
