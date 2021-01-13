@@ -127,6 +127,12 @@ void Sandbox::display()
 
     glDepthFunc(GL_LESS);
     glClearDepth(1.0);
+
+    // Generate a texture with voxelpositions, an activate voxel if it is within the
+    // limits of z-buffer textures.
+    voxHandler->genVoxelPositions(view, projection, 
+            depthFBO_X, depthFBO_Y, depthFBO_Z, 
+            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
     
     /*
 
@@ -169,12 +175,12 @@ void Sandbox::display()
             depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
 
 */
-        
+/* UNCOMMENT      
         voxHandler->genVoxelPositions(view, projection, 
             depthFBO_X, depthFBO_Y, depthFBO_Z, 
             depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+*/
 
-        
         voxHandler->drawVoxelModel(view, projection, 
             depthFBO_X, depthFBO_Y, depthFBO_Z, 
             depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
@@ -251,7 +257,7 @@ void Sandbox::display()
         cubeShader->uploadMat4("projection", projection);
         cubeShader->uploadMat4("view", view);
         cube.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
-        cube.setPosition(glm::vec3(5.0f, 5.0f, -10.0f));
+        cube.setPosition(glm::vec3(15.0f, 5.0f, -10.0f));
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
@@ -321,7 +327,13 @@ void Sandbox::display()
 
 
         //std::cout << glGetError() << std::endl;
-
+// If you want to see on screen fbo, uncomment and make sure function renders to screenfb
+// see genVoxelPositions() in voxelhandler.cpp beginning
+/*
+        voxHandler->genVoxelPositions(view, projection, 
+            depthFBO_X, depthFBO_Y, depthFBO_Z, 
+            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+*/
         // #######################
 
         // Swap front and back buffers 

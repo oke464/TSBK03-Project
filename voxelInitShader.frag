@@ -1,4 +1,4 @@
-#version 330
+#version 410
 out vec4 FragColor;
 
 in vec4 vertexColor; // the input variable from the vertex shader (same name and same type)  
@@ -40,11 +40,25 @@ void main()
         {
             if(voxPosDepth.z > z_min.x && voxPosDepth.z < z_max.x)
             {
+                // This should be for final or something similar
                 FragColor = vec4(outVoxelPos.x ,outVoxelPos.y ,outVoxelPos.z ,1);
             }
+            else
+            {
+                FragColor = vec4(voxPosDepth,0);
+            }
+        }
+        else
+        {
+            FragColor = vec4(voxPosDepth,0);
         }
     }
-    
+    else
+    {
+        FragColor = vec4(voxPosDepth,0);
+    }
+
+    FragColor = vec4(voxPosDepth.x ,voxPosDepth.y ,voxPosDepth.z,1); // This colors all and makes it so we can view voxelcube
     //FragColor = vec4(outVoxelPos.x ,outVoxelPos.y ,outVoxelPos.z,0.5);//vertexColor;//texture(texFBOY, outTexCoord);
     // -------------------------------------------------
 } 

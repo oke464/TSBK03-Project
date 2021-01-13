@@ -15,28 +15,40 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
         //voxelCoordsFBO{Framebuffer(1,1)},
         voxelShader{new Shader("voxelShader.vert", "voxelShader.frag")},
         voxelInitShader{new Shader("voxelInitShader.vert", "voxelInitShader.frag")},
+        
         quadVertices{
                 1.0f,  1.0f, 0.0f,  // top right
                 1.0f, -1.0f, 0.0f,  // bottom right
                 -1.0f, -1.0f, 0.0f,  // bottom left
                 -1.0f,  1.0f, 0.0f   // top left 
                 },
-        quadIndices{  // note that we start from 0!
+        
+       /*
+        quadVertices{
+                0.5f,  0.5f, 0.0f,  // top right
+                0.5f, -0.5f, 0.0f,  // bottom right
+                -0.5f, -0.5f, 0.0f,  // bottom left
+                -0.5f,  0.5f, 0.0f   // top left 
+                },
+        */
+        quadIndices{  
                     0, 1, 3,   // first triangle
                     1, 2, 3    // second triangle
                     },
         voxelRadius{modelRadius},
-        squareTexCoord{ 0, 0,
+        squareTexCoord{ 
+                        0, 0,
                         0, 1,
                         1, 1,
-                        1, 0 },
+                        1, 0
+                      },
         voxelLatticeShader{new Shader("voxelLatticeShader.vert", "voxelLatticeShader.frag")},
         voxelModelShader{new Shader("voxelModelShader.vert", "voxelModelShader.frag")},
         voxelPosFBO{Framebuffer(1,1)},
         far{10},
         near{0},
         voxelModel{Model(modelPath)},
-        voxelSizeScale{0.5f},
+        voxelSizeScale{1.0f},
         objectSizeScale{1.0f}
 {   
     int wWidth, wHeight;
@@ -69,6 +81,7 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
 
     // Init with amount of voxels to access by instance number in vertshader. 
     //voxelPosFBO = Framebuffer(voxelPositions.size(), voxelPositions.size());
+    //voxelPosFBO = Framebuffer(voxelPositions.size(), 1);
     voxelPosFBO = Framebuffer(wWidth, wHeight);
     
     std::cout << "Voxelmodel meshes: " << voxelModel.meshes.size() << std::endl;
@@ -134,23 +147,20 @@ Extension write vertices as a grid in 2D with known positions. Then give each of
 void VoxelHandler::genVoxelPositions(glm::mat4 view, glm::mat4 proj, Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
         Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater)
 {
+
+    glDisable(GL_DEPTH_TEST);
     //Bind voxelFBO to write result to 
     voxelPosFBO.bindFBO();
     //voxelPosFBO.bindScreenFB();
     // Clear buffer, keep depth to use z-buffer in offscreen fbo
-    glClearColor(0,1,0,1);
+    glClearColor(0,1,0,0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     voxelInitShader->useProgram();
-    // Bind FBO to get output.
 
-    // Create camera for depth buffer generator
-    voxelInitShader->uploadMat4("dView", view);
-    
-    // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.        
+    // Use near and far for z-buffer generation.        
     float near = 0.0f;
     float far = 10.0f;
-    voxelInitShader->uploadMat4("dProj", proj);
     voxelInitShader->uploadFloat("near", near);
     voxelInitShader->uploadFloat("far", far);
 
@@ -173,6 +183,8 @@ void VoxelHandler::genVoxelPositions(glm::mat4 view, glm::mat4 proj, Framebuffer
     initDrawVoxelsInstanced(voxelInitShader);
     // Unbind voxelFBO
     voxelPosFBO.bindScreenFB();
+
+    glEnable(GL_DEPTH_TEST);
 }   
 
 void VoxelHandler::bindBuffersInstanced()
@@ -266,6 +278,7 @@ void VoxelHandler::bindInitBuffersInstanced()
     glEnableVertexAttribArray(0);	
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     
+    glBindVertexArray(VAO2);
     glGenBuffers(1, &squareTexCoordBuffer2);
     glBindBuffer(GL_ARRAY_BUFFER, squareTexCoordBuffer2);
     glBufferData(GL_ARRAY_BUFFER, sizeof(squareTexCoord), &squareTexCoord[0], GL_STATIC_DRAW);  
@@ -275,16 +288,16 @@ void VoxelHandler::bindInitBuffersInstanced()
    
     glVertexAttribDivisor(2, 1);
 
+    glBindVertexArray(VAO2);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
     
-
+    glBindVertexArray(VAO2);
     // Bind transformation matrices 
     glGenBuffers(1, &modelMatrixBuffer2);
     glBindBuffer(GL_ARRAY_BUFFER, modelMatrixBuffer2);
     glBufferData(GL_ARRAY_BUFFER, voxelPositions.size() * sizeof(glm::mat4), &voxelPositionMatrices[0], GL_STATIC_DRAW);
 
-    glBindVertexArray(VAO2);
     // vertex attributes
     std::size_t vec4Size = sizeof(glm::vec4);
     glEnableVertexAttribArray(7); 
