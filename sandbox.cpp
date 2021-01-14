@@ -8,15 +8,21 @@ Sandbox::Sandbox(GLFWwindow* window) :
                     0.0f,  0.5f, 0.0f  // top
                     },
     quadVertices{
-                0.5f,  0.5f, 0.0f,  // top right
-                0.5f, -0.5f, 0.0f,  // bottom right
                 -0.5f, -0.5f, 0.0f,  // bottom left
+                0.5f, -0.5f, 0.0f,  // bottom right
+                0.5f,  0.5f, 0.0f,  // top right
                 -0.5f,  0.5f, 0.0f   // top left 
                 },
     quadIndices{  // note that we start from 0!
                 0, 1, 3,   // first triangle
                 1, 2, 3    // second triangle
                 },
+    quadTexCoords{
+                   0, 0,
+                   1, 0,
+                   1, 1,
+                   0, 1
+                  },
     sandboxShader{new Shader("sandboxShader.vert", "sandboxShader.frag")},
     cameraPos{glm::vec3(0.0f, 5.0f,  3.0f)},
     cameraFront{glm::vec3(0.0f, 0.0f, -1.0f)},
@@ -119,25 +125,43 @@ void Sandbox::display()
     int wWidth, wHeight;
     glfwGetWindowSize(window, &wWidth, &wHeight);
     
-    Framebuffer depthFBO_Z(wWidth, wHeight);
-    Framebuffer depthFBO_Y(wWidth, wHeight);
-    Framebuffer depthFBO_X(wWidth, wHeight);
-    Framebuffer depthFBO_ZGreater(wWidth, wHeight);
-    Framebuffer depthFBO_YGreater(wWidth, wHeight);
-    Framebuffer depthFBO_XGreater(wWidth, wHeight);
+    Framebuffer depthFBO_Zmin(wWidth, wHeight);
+    Framebuffer depthFBO_Ymin(wWidth, wHeight);
+    Framebuffer depthFBO_Xmin(wWidth, wHeight);
+    Framebuffer depthFBO_Zmax(wWidth, wHeight);
+    Framebuffer depthFBO_Ymax(wWidth, wHeight);
+    Framebuffer depthFBO_Xmax(wWidth, wHeight);
+    
+    Framebuffer activeVoxelFBO_Zmin(wWidth, wHeight);
+    Framebuffer activeVoxelFBO_Ymin(wWidth, wHeight);
+    Framebuffer activeVoxelFBO_Xmin(wWidth, wHeight);
+    Framebuffer activeVoxelFBO_Zmax(wWidth, wHeight);
+    Framebuffer activeVoxelFBO_Ymax(wWidth, wHeight);
+    Framebuffer activeVoxelFBO_Xmax(wWidth, wHeight);
 
 
     // This generates textures with depth data
-    genereteFBODepthTextures(depthFBO_X, depthFBO_Y, depthFBO_Z, depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+    genereteFBODepthTextures(depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+                             depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
 
     glDepthFunc(GL_LESS);
     glClearDepth(1.0);
 
+/* Version1
     // Generate a texture with voxelpositions, an activate voxel if it is within the
     // limits of z-buffer textures.
     voxHandler->genVoxelPositions(view, projection, 
-            depthFBO_X, depthFBO_Y, depthFBO_Z, 
-            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
+*/
+
+    // Generate voxel active textures these are used to check in voxelmodel draw call.
+    voxHandler->genActiveVoxelTextures(depthFBO_Zmin, activeVoxelFBO_Zmin);
+    voxHandler->genActiveVoxelTextures(depthFBO_Xmin, activeVoxelFBO_Xmin);
+    voxHandler->genActiveVoxelTextures(depthFBO_Ymin, activeVoxelFBO_Ymin);
+    voxHandler->genActiveVoxelTextures(depthFBO_Zmax, activeVoxelFBO_Zmax);
+    voxHandler->genActiveVoxelTextures(depthFBO_Xmax, activeVoxelFBO_Xmax);
+    voxHandler->genActiveVoxelTextures(depthFBO_Ymax, activeVoxelFBO_Ymax);
     
     /*
 
@@ -223,22 +247,77 @@ void Sandbox::display()
         //voxHandler->drawVoxelGrid(view, projection);
 /*
         voxHandler->drawVoxelizedModel(view, projection, 
-            depthFBO_X, depthFBO_Y, depthFBO_Z, 
-            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
 
 */
-/* UNCOMMENT      
+/* Version1 UNCOMMENT if we want to generate textures each frame
         voxHandler->genVoxelPositions(view, projection, 
-            depthFBO_X, depthFBO_Y, depthFBO_Z, 
-            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
 */
-
+/* Version1
         voxHandler->drawVoxelModel(view, projection, 
-            depthFBO_X, depthFBO_Y, depthFBO_Z, 
-            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
-
+            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
+*/
         
+        voxHandler->drawVoxelModel2(view, projection, 
+            activeVoxelFBO_Xmin, activeVoxelFBO_Ymin, activeVoxelFBO_Zmin, 
+            activeVoxelFBO_Xmax, activeVoxelFBO_Ymax, activeVoxelFBO_Zmax);
 
+        // ------ For demo, display depth textures on quads around bunny
+        // z-dir
+        quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadModel = glm::translate(quadModel, glm::vec3(20.0f, 4.0f, -12.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        depthFBO_Zmin.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+
+        quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadModel = glm::translate(quadModel, glm::vec3(20.0f, 4.0f, -18.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        depthFBO_Zmax.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+
+        // x-dir
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(17.0f, 4.0f, -15.0f));
+        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        depthFBO_Xmin.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(23.0f, 4.0f, -15.0f));
+        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        depthFBO_Xmax.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+
+        // y-dir
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f, 7.0f, -15.0f));
+        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        depthFBO_Ymin.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f, 1.0f, -15.0f));
+        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        depthFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+        // ------
 /*
         // ----------- Display FBO textures to cube ------------
         // Draw cube
@@ -254,7 +333,7 @@ void Sandbox::display()
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
-        depthFBO_Z.bindTex(cubeShader, "texUnit", 0);
+        depthFBO_Zmin.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
         
@@ -262,7 +341,7 @@ void Sandbox::display()
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
-        depthFBO_X.bindTex(cubeShader, "texUnit", 0);
+        depthFBO_Xmin.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
         
@@ -270,7 +349,7 @@ void Sandbox::display()
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
-        depthFBO_Y.bindTex(cubeShader, "texUnit", 0);
+        depthFBO_Ymin.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
         // *** 
@@ -280,7 +359,7 @@ void Sandbox::display()
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
-        depthFBO_ZGreater.bindTex(cubeShader, "texUnit", 0);
+        depthFBO_Zmax.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
         
@@ -288,7 +367,7 @@ void Sandbox::display()
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
-        depthFBO_XGreater.bindTex(cubeShader, "texUnit", 0);
+        depthFBO_Xmax.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
         
@@ -296,12 +375,12 @@ void Sandbox::display()
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
-        depthFBO_YGreater.bindTex(cubeShader, "texUnit", 0);
+        depthFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
         // *** 
-*/
 
+*/
 
 
 
@@ -315,7 +394,8 @@ void Sandbox::display()
         cube.updateTransformation();
         // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
-        voxHandler->getInitFBO().bindTex(cubeShader, "texUnit", 0);
+        //voxHandler->getInitFBO().bindTex(cubeShader, "texUnit", 0);
+        activeVoxelFBO_Zmin.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
 
@@ -336,7 +416,7 @@ void Sandbox::display()
         bunnyShader->uploadMat4("projection", projection);
         bunnyShader->uploadMat4("view", view);
 
-        bunny.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        bunny.setPosition(glm::vec3(20.0f, 4.0f, -15.0f));
         bunny.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
         bunny.updateTransformation();
         bunnyShader->uploadMat4("model", bunny.getTransformation());
@@ -385,8 +465,8 @@ void Sandbox::display()
 // see genVoxelPositions() in voxelhandler.cpp beginning
 /*
         voxHandler->genVoxelPositions(view, projection, 
-            depthFBO_X, depthFBO_Y, depthFBO_Z, 
-            depthFBO_XGreater, depthFBO_YGreater, depthFBO_ZGreater);
+            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
 */
         // #######################
 
@@ -444,17 +524,28 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Resulting in no voxels inside object...
         glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(5,5,5));
 
+        // THIS API SEEMS TO apply first function call last for some reason (left to right) so call translate last -> applies first
         // Translates BUNNY's center to center of screen
         glm::mat4 trans = glm::translate(scale, glm::vec3(0, -0.1, 0)); 
 
         // Rotation to Z direction
-        glm::mat4 modelDirZ = glm::rotate(trans, glm::radians(0.0f), glm::vec3(0, 0, 1)); // Set t in radians to rotate object.
+        glm::mat4 modelDirZ = glm::rotate(scale, glm::radians(0.0f), glm::vec3(0, 0, 1)); // Set t in radians to rotate object.
 
         // Rotation to X direction
-        glm::mat4 modelDirX = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
+        glm::mat4 modelDirX = glm::rotate(scale, glm::radians(90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
         
         // Rotation to Y direction
-        glm::mat4 modelDirY = glm::rotate(trans, glm::radians(90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
+        glm::mat4 modelDirY = glm::rotate(scale, glm::radians(90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
+        
+        
+        // Rotation to Z direction
+        modelDirZ = glm::translate(modelDirZ, glm::vec3(0, -0.1, 0));
+
+        // Rotation to X direction
+        modelDirX = glm::translate(modelDirX, glm::vec3(0, -0.1, 0));
+        
+        // Rotation to Y direction
+        modelDirY = glm::translate(modelDirY, glm::vec3(0, -0.1, 0));
         
         
 
@@ -592,7 +683,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         glDepthFunc(GL_LESS);   // Make closest fragments pass, (nearest)
         glClearDepth(1.0);      // Let fragments less than 1 pass
 
-        depthFBO_Z.bindFBO();
+        depthFBO_Zmin.bindFBO();
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirZ);
         // Set backgroundcolor
@@ -602,7 +693,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Draw everything to offscreen buffer
         bunny.draw(*depthShader);
 
-        depthFBO_X.bindFBO();
+        depthFBO_Xmin.bindFBO();
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirX);
         // Set backgroundcolor
@@ -612,7 +703,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Draw everything to offscreen buffer
         bunny.draw(*depthShader);
 
-        depthFBO_Y.bindFBO();
+        depthFBO_Ymin.bindFBO();
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirY);
         // Set backgroundcolor
@@ -629,7 +720,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         glDepthFunc(GL_GREATER);    // Make furthest fragments pass, (nearest)
         glClearDepth(0.0);          // Have to set depth test to zero else nothing will pass
 
-        depthFBO_ZGreater.bindFBO();
+        depthFBO_Zmax.bindFBO();
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirZ);
         // Set backgroundcolor
@@ -639,7 +730,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Draw everything to offscreen buffer
         bunny.draw(*depthShader);
 
-        depthFBO_XGreater.bindFBO();
+        depthFBO_Xmax.bindFBO();
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirX);
         // Set backgroundcolor
@@ -649,7 +740,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Draw everything to offscreen buffer
         bunny.draw(*depthShader);
 
-        depthFBO_YGreater.bindFBO();
+        depthFBO_Ymax.bindFBO();
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirY);
         // Set backgroundcolor
@@ -661,7 +752,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // *** 
 
         // Binds default screen FB back, do not really like this as a memberfunction
-        depthFBO_Z.bindScreenFB(); 
+        depthFBO_Zmin.bindScreenFB(); 
         // ------------------------------------
 */
 }
@@ -699,7 +790,7 @@ void Sandbox::drawTriangle()
 void Sandbox::drawQuad()
 {
     // BINDS
-    unsigned int VBO, VAO, EBO;
+    unsigned int VBO, VAO, EBO, quadTexCoordBuffer;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -712,9 +803,16 @@ void Sandbox::drawQuad()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+
+     glGenBuffers(1, &quadTexCoordBuffer);
+     glBindBuffer(GL_ARRAY_BUFFER, quadTexCoordBuffer);
+     glBufferData(GL_ARRAY_BUFFER, sizeof(quadTexCoords), quadTexCoords, GL_STATIC_DRAW);
+
+     glEnableVertexAttribArray(2);
+     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
@@ -726,12 +824,13 @@ void Sandbox::drawQuad()
     glBindVertexArray(0); 
 
     // upload matrices to shader 
-    sandboxShader->uploadMat4("projection", projection);
-    sandboxShader->uploadMat4("view", view);
-    sandboxShader->uploadMat4("model", quadModel);
+    cubeShader->useProgram();
+    cubeShader->uploadMat4("projection", projection);
+    cubeShader->uploadMat4("view", view);
+    cubeShader->uploadMat4("model", quadModel);
 
     // draw our first quad
-    glUseProgram(sandboxShader->shaderID);
+    glUseProgram(cubeShader->shaderID);
     glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

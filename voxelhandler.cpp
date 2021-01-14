@@ -15,6 +15,10 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
         //voxelCoordsFBO{Framebuffer(1,1)},
         voxelShader{new Shader("voxelShader.vert", "voxelShader.frag")},
         voxelInitShader{new Shader("voxelInitShader.vert", "voxelInitShader.frag")},
+        voxelLatticeShader{new Shader("voxelLatticeShader.vert", "voxelLatticeShader.frag")},
+        voxelModelShader{new Shader("voxelModelShader.vert", "voxelModelShader.frag")},
+        voxelModelShader2{new Shader("voxelModelShader2.vert", "voxelModelShader2.frag")},
+        voxelActiveShader{new Shader("voxelActiveTest.vert", "voxelActiveTest.frag")},
         
         quadVertices{
                 1.0f,  1.0f, 0.0f,  // top right
@@ -41,8 +45,6 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
                         1, 1,
                         1, 0
                       },
-        voxelLatticeShader{new Shader("voxelLatticeShader.vert", "voxelLatticeShader.frag")},
-        voxelModelShader{new Shader("voxelModelShader.vert", "voxelModelShader.frag")},
         voxelPosFBO{Framebuffer(1,1)},
         far{10},
         near{0},
@@ -287,7 +289,7 @@ void VoxelHandler::bindInitBuffersInstanced()
     glEnableVertexAttribArray(2);	
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
    
-    glVertexAttribDivisor(2, 1);
+    //glVertexAttribDivisor(2, 1);
 
    
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
@@ -437,3 +439,79 @@ void VoxelHandler::drawVoxelModel(glm::mat4 view, glm::mat4 proj, Framebuffer FB
 
     
 }
+
+void VoxelHandler::genActiveVoxelTextures(Framebuffer depthFBO, Framebuffer targetFBO)
+{
+    // Don't know if this makes a difference for offscreen FBO, but did some debugging with on-screen so needed there. 
+    glDisable(GL_DEPTH_TEST);
+
+    // Bind target FBO
+    targetFBO.bindFBO();
+    //targetFBO.bindScreenFB();
+
+    // Clear buffer, keep depth to use z-buffer in offscreen fbo
+    // Set aplha to 0 because if voxelModelShader checks if alpha == 1 to know if voxel is active
+    glClearColor(0,1,0,0); 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    voxelActiveShader->useProgram();
+
+    // Bind texture containing depth data.
+    glActiveTexture(GL_TEXTURE1);
+    depthFBO.bindTex(voxelActiveShader, "depthTex", 1);
+
+    voxelActiveShader->useProgram();
+    // Use near and far for scaling the voxel position to z-buffer space [0,1]   
+    float near = 0.0f;
+    float far = 10.0f;
+    voxelActiveShader->uploadFloat("near", near);
+    voxelActiveShader->uploadFloat("far", far);
+
+    // Bind everything and draw
+    bindInitBuffersInstanced();
+    initDrawVoxelsInstanced(voxelActiveShader);
+
+    targetFBO.bindScreenFB();
+
+    glEnable(GL_DEPTH_TEST);
+}
+
+
+void VoxelHandler::drawVoxelModel2(glm::mat4 view, glm::mat4 proj, 
+    Framebuffer FBOXminActive, Framebuffer FBOYminActive, Framebuffer FBOZminActive, 
+    Framebuffer FBOXmaxActive, Framebuffer FBOYmaxActive, Framebuffer FBOZmaxActive)
+
+{
+    // Bind screen FBO
+    voxelPosFBO.bindScreenFB();
+
+    // Use correct shader
+    voxelModelShader2->useProgram();
+
+    // Upload all 6 active voxel test textures
+    glActiveTexture(GL_TEXTURE0);
+    FBOXminActive.bindTex(voxelModelShader2, "FBOXminActive", 0);
+    glActiveTexture(GL_TEXTURE1);
+    FBOYminActive.bindTex(voxelModelShader2, "FBOYminActive", 1);
+    glActiveTexture(GL_TEXTURE2);
+    FBOZminActive.bindTex(voxelModelShader2, "FBOZminActive", 2);
+    glActiveTexture(GL_TEXTURE3);
+    FBOXmaxActive.bindTex(voxelModelShader2, "FBOXmaxActive", 3);
+    glActiveTexture(GL_TEXTURE4);
+    FBOYmaxActive.bindTex(voxelModelShader2, "FBOYmaxActive", 4);
+    glActiveTexture(GL_TEXTURE5);
+    FBOZmaxActive.bindTex(voxelModelShader2, "FBOZmaxActive", 5);
+
+    // Upload view and projection matrix 
+    // Pass sandbox camera
+    voxelModelShader2->uploadMat4("dView", view);
+    // Pass sandbox projection. 
+    voxelModelShader2->uploadMat4("dProj", proj);
+
+    // Bind and draw instanced.
+    bindBuffersInstanced();
+    drawVoxelsInstanced(voxelModelShader2);
+
+
+}
+

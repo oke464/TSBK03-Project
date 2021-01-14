@@ -42,6 +42,7 @@ private:
     float triangleVertices[9]; // Triangle has 3 vertices each 3 coordninates
     float quadVertices[12]; // Quad 4 vertices
     unsigned int quadIndices[6]; // Used for EBO
+    float quadTexCoords[8];
 
     GLFWwindow* window{};
     Tiles* bottomTiles{};

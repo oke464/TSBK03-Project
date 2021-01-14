@@ -34,6 +34,11 @@ public:
     void genVoxelPositions(glm::mat4 view, glm::mat4 proj, Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
         Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater);
 
+    void genActiveVoxelTextures(Framebuffer inputDepthFBO, Framebuffer targetFBO);
+    void drawVoxelModel2(glm::mat4 view, glm::mat4 proj, 
+            Framebuffer FBOXminActive, Framebuffer FBOYminActive, Framebuffer FBOZminActive, 
+            Framebuffer FBOXmaxActive, Framebuffer FBOYmaxActive, Framebuffer FBOZmaxActive);
+
 private:
     GLFWwindow* window;
     //Framebuffer voxelCoordsFBO;
@@ -43,6 +48,8 @@ private:
     Shader* voxelLatticeShader;
     Shader* voxelModelShader;
     Shader* voxelInitShader;
+    Shader* voxelModelShader2;
+    Shader* voxelActiveShader;
     Framebuffer voxelPosFBO;
     float near;
     float far;
