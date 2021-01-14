@@ -22,7 +22,7 @@ void main()
 {
 
     // Extract depthbuffer data from texture
-    vec4 x_min = texture(texFBOX, outTexCoord + vec2(500/1080, 400/800));
+    vec4 x_min = texture(texFBOX, outTexCoord);
     vec4 x_max = texture(texFBOXGreater, outTexCoord);
     vec4 y_min = texture(texFBOY, outTexCoord);
     vec4 y_max = texture(texFBOYGreater, outTexCoord);
