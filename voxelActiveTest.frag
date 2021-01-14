@@ -35,6 +35,8 @@ void main()
     // that we don't have background color with alpha. 
 
     // Output subracted data to the offscreen FBO.
+    //FragColor = vec4(voxPosDepth, 0);
     FragColor = depthTexture - vec4(voxPosDepth, 0);
+    //FragColor = depthTexture - vec4(0.1,0.1,0.1, 0);
     //FragColor = texture(depthTex, outTexCoord);
 } 

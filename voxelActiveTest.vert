@@ -32,8 +32,8 @@ void main()
     vec4 newpos = translate * vec4(aPos, 1.0);
 
     // Uncomment if we want to pass voxel position colors. This is shifted quads one pixel at the time.
-    //gl_Position = vec4(newpos);    
+    gl_Position = vec4(newpos);    
     
     // Uncomment if want to pass texture only
-    gl_Position = vec4(aPos, 1.0); 
+    //gl_Position = vec4(aPos, 1.0); 
 }

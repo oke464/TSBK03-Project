@@ -318,72 +318,64 @@ void Sandbox::display()
         depthFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
         drawQuad();
         // ------
-/*
-        // ----------- Display FBO textures to cube ------------
-        // Draw cube
+
+        // ------------ Demo display active voxeltextures
+        float xOffset = -7.0f;
+        // z-dir
+        quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadModel = glm::translate(quadModel, glm::vec3(20.0f + xOffset, 4.0f, -12.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
         cubeShader->useProgram();
-
-        // Upload matrices and draw cube
-        cubeShader->uploadMat4("projection", projection);
-        cubeShader->uploadMat4("view", view);
-        cube.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
-
-        // *** Textures with setting depth test less ***
-        cube.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
-        cube.updateTransformation();
-        // set active texture to the one from fbo
         glActiveTexture(GL_TEXTURE0);
-        depthFBO_Zmin.bindTex(cubeShader, "texUnit", 0);
-        cubeShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*cubeShader);
-        
-        cube.setPosition(glm::vec3(10.0f, 0.0f, 0.0f));
-        cube.updateTransformation();
-        // set active texture to the one from fbo
-        glActiveTexture(GL_TEXTURE0);
-        depthFBO_Xmin.bindTex(cubeShader, "texUnit", 0);
-        cubeShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*cubeShader);
-        
-        cube.setPosition(glm::vec3(15.0f, 0.0f, 0.0f));
-        cube.updateTransformation();
-        // set active texture to the one from fbo
-        glActiveTexture(GL_TEXTURE0);
-        depthFBO_Ymin.bindTex(cubeShader, "texUnit", 0);
-        cubeShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*cubeShader);
-        // *** 
+        activeVoxelFBO_Zmin.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
 
-        // *** Textures with setting depth test greater ***
-        cube.setPosition(glm::vec3(5.0f, 0.0f, -5.0f));
-        cube.updateTransformation();
-        // set active texture to the one from fbo
+        quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadModel = glm::translate(quadModel, glm::vec3(20.0f + xOffset, 4.0f, -18.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
         glActiveTexture(GL_TEXTURE0);
-        depthFBO_Zmax.bindTex(cubeShader, "texUnit", 0);
-        cubeShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*cubeShader);
-        
-        cube.setPosition(glm::vec3(10.0f, 0.0f, -5.0f));
-        cube.updateTransformation();
-        // set active texture to the one from fbo
-        glActiveTexture(GL_TEXTURE0);
-        depthFBO_Xmax.bindTex(cubeShader, "texUnit", 0);
-        cubeShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*cubeShader);
-        
-        cube.setPosition(glm::vec3(15.0f, 0.0f, -5.0f));
-        cube.updateTransformation();
-        // set active texture to the one from fbo
-        glActiveTexture(GL_TEXTURE0);
-        depthFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
-        cubeShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*cubeShader);
-        // *** 
+        activeVoxelFBO_Zmax.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
 
-*/
+        // x-dir
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(17.0f + xOffset, 4.0f, -15.0f));
+        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        activeVoxelFBO_Xmin.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(23.0f + xOffset, 4.0f, -15.0f));
+        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        activeVoxelFBO_Xmax.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+
+        // y-dir
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f + xOffset, 7.0f, -15.0f));
+        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        activeVoxelFBO_Ymin.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f + xOffset, 1.0f, -15.0f));
+        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
+        cubeShader->useProgram();
+        glActiveTexture(GL_TEXTURE0);
+        activeVoxelFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
+        drawQuad();
+        // ------
 
 
 
+/*
         // *** Texting voxel inits
         cubeShader->useProgram();
         // Upload matrices and draw cube
@@ -398,7 +390,7 @@ void Sandbox::display()
         activeVoxelFBO_Zmin.bindTex(cubeShader, "texUnit", 0);
         cubeShader->uploadMat4("model", cube.getTransformation());
         cube.draw(*cubeShader);
-
+*/
         // ------------------------------------
 
 
@@ -421,7 +413,7 @@ void Sandbox::display()
         bunny.updateTransformation();
         bunnyShader->uploadMat4("model", bunny.getTransformation());
         bunny.draw(*bunnyShader);
-        
+/*       
         // Draw sphere
         bunnyShader->useProgram();
         bunnyShader->uploadMat4("projection", projection);
@@ -431,7 +423,7 @@ void Sandbox::display()
         sphere.updateTransformation();
         bunnyShader->uploadMat4("model", sphere.getTransformation());
         sphere.draw(*bunnyShader);
-
+*/
         // ------------------------------------
 
 /*  This is example to load texture
