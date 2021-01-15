@@ -51,7 +51,7 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
         near{0},
         voxelModel{Model(modelPath)},
         voxelSizeScale{0.2f},
-        objectSizeScale{1.0f}
+        modelSizeScale{1.0f}
 {   
     int wWidth, wHeight;
     glfwGetWindowSize(window, &wWidth, &wHeight);
@@ -60,7 +60,6 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
 
     // Generate voxelpositions based on voxelradius and far/voxelbox
     float offset = 2 * voxelRadius * voxelSizeScale;
-    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(objectSizeScale));
 
     //glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0,1,0));
     for (float i = near; i < far; i+=offset)
@@ -556,6 +555,9 @@ void VoxelHandler::drawVoxelModel3(glm::mat4 view, glm::mat4 proj,
     // Supposed to be same for all FB0s 
     voxelModelShader3->uploadFloat("texWidth", FBOXmax.width);
     voxelModelShader3->uploadFloat("texHeight", FBOXmax.height);
+
+    // Upload model scaling to make entire object smaller if desired.
+    voxelModelShader3->uploadFloat("modelScaleFactor", modelSizeScale);
 
     // Bind and draw instanced
     bindBuffersInstanced();

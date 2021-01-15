@@ -10,18 +10,20 @@ out vec4 vertexColor; // specify a color output to the fragment shader
 uniform mat4 dView;
 uniform mat4 dProj;
 
-uniform float texWidth;
-uniform float texHeight;
-
-uniform float near;
-uniform float far;
-
 uniform sampler2D FBOXmin;
 uniform sampler2D FBOYmin;
 uniform sampler2D FBOZmin;
 uniform sampler2D FBOXmax;
 uniform sampler2D FBOYmax;
 uniform sampler2D FBOZmax;
+
+uniform float near;
+uniform float far;
+
+uniform float texWidth;
+uniform float texHeight;
+
+uniform float modelScaleFactor;
 
 out vec2 outTexCoord;
 
@@ -58,8 +60,8 @@ void main()
     // In x-dir we have the yz plane as look-up coords
     // Note that we have to offset coordinates in  width direction, to start from the correct corner--positive left to right, 
     // will otherwise be looking from right to left. zWidthLookUp is negative from voxel orientation. 
-    vec4 xMinDepth = texelFetch(FBOXmin, ivec2(texWidth+zWidthLookUp, yHeightLookUp), 0);
-    vec4 xMaxDepth = texelFetch(FBOXmax, ivec2(texWidth+zWidthLookUp, yHeightLookUp), 0);
+    vec4 xMinDepth = texelFetch(FBOXmin, ivec2(texWidth + zWidthLookUp, yHeightLookUp), 0);
+    vec4 xMaxDepth = texelFetch(FBOXmax, ivec2(texWidth + zWidthLookUp, yHeightLookUp), 0);
     // In y-dir we have the xz plane as look-up coords
     vec4 yMinDepth = texelFetch(FBOYmin, ivec2(-zWidthLookUp, xHeightLookUp), 0);
     vec4 yMaxDepth = texelFetch(FBOYmax, ivec2(-zWidthLookUp, xHeightLookUp), 0);
@@ -68,14 +70,15 @@ void main()
     vec4 zMaxDepth = texelFetch(FBOZmax, ivec2(xWidthLookUp, yHeightLookUp), 0);
 
     mat4 scaleMatrix = mat4(0);
-    scaleMatrix[0][0] = 0.8;
-    scaleMatrix[1][1] = 0.8;
-    scaleMatrix[2][2] = 0.8;
+    scaleMatrix[0][0] = modelScaleFactor;
+    scaleMatrix[1][1] = modelScaleFactor;
+    scaleMatrix[2][2] = modelScaleFactor;
     scaleMatrix[3][3] = 1;
     
     // Check if voxel is active, within constraints of depthdata. 
     // Can use either .x .y or .z component since depth data is grey
     // If alpha channel == 0 then we have background color so don't skip if so.
+    // It does not seem to be needed because the other tests filters this by default.
     //if (xMinDepth.a != 0 && xMaxDepth.a != 0 && yMinDepth.a != 0 && yMaxDepth.a != 0 && zMinDepth.a != 0 && zMaxDepth.a != 0)
     //{
         if (voxPosDepthX >= (xMinDepth.x) && voxPosDepthX <= (xMaxDepth.x))

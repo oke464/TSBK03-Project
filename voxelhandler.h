@@ -71,7 +71,7 @@ private:
     unsigned int EBO2;
     std::vector<glm::mat4> voxelPositionMatrices;
     float voxelSizeScale;
-    float objectSizeScale;
+    float modelSizeScale;
 
     float quadVertices[12]; // Quad 4 vertices
     unsigned int quadIndices[6]; // Used for EBO
