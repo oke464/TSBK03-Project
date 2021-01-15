@@ -56,8 +56,10 @@ void main()
     // offset a little bit to make more difference between min and max
     float offset = 0.5;
     // In x-dir we have the yz plane as look-up coords
-    vec4 xMinDepth = texelFetch(FBOXmin, ivec2(-zWidthLookUp, yHeightLookUp), 0);
-    vec4 xMaxDepth = texelFetch(FBOXmax, ivec2(-zWidthLookUp, yHeightLookUp), 0);
+    // Note that we have to offset coordinates in  width direction, to start from the correct corner--positive left to right, 
+    // will otherwise be looking from right to left. zWidthLookUp is negative from voxel orientation. 
+    vec4 xMinDepth = texelFetch(FBOXmin, ivec2(texWidth+zWidthLookUp, yHeightLookUp), 0);
+    vec4 xMaxDepth = texelFetch(FBOXmax, ivec2(texWidth+zWidthLookUp, yHeightLookUp), 0);
     // In y-dir we have the xz plane as look-up coords
     vec4 yMinDepth = texelFetch(FBOYmin, ivec2(-zWidthLookUp, xHeightLookUp), 0);
     vec4 yMaxDepth = texelFetch(FBOYmax, ivec2(-zWidthLookUp, xHeightLookUp), 0);
@@ -76,17 +78,17 @@ void main()
     // If alpha channel == 0 then we have background color so don't skip if so.
     //if (xMinDepth.a != 0 && xMaxDepth.a != 0 && yMinDepth.a != 0 && yMaxDepth.a != 0 && zMinDepth.a != 0 && zMaxDepth.a != 0)
     //{
-        //if (voxPosDepthX >= (xMinDepth.x) && voxPosDepthX <= (xMaxDepth.x))
-        //{
-            //if (voxPosDepthY >= (yMinDepth.x) && voxPosDepthY <= (yMaxDepth.x))
-            //{
+        if (voxPosDepthX >= (xMinDepth.x) && voxPosDepthX <= (xMaxDepth.x))
+        {
+            if (voxPosDepthY >= (yMinDepth.x) && voxPosDepthY <= (yMaxDepth.x))
+            {
                 if (voxPosDepthZ >= (zMinDepth.x) && voxPosDepthZ <= (zMaxDepth.x))
                 {
                     gl_Position = dProj * dView * scaleMatrix * voxMod * vec4(aPos, 1.0); 
                     vertexColor = vec4(voxPosDepthX, voxPosDepthY, -voxPosDepthZ, 1.0);
                 }
-            //}
-        //}
+            }
+        }
 
     //}
 

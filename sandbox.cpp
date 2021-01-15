@@ -524,23 +524,23 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Translates BUNNY's center to center of screen
         glm::mat4 trans = glm::translate(scale, glm::vec3(0, -0.1, 0)); 
 
+        // --- Rotations
+        //      By default we look in negative z-direction. To make all depth buffers align we have to rotate the object to look in negative x and negative y direction respectively. 
+        //      Then we can make our depth test textures with the same testfunction.
         // Rotation to Z direction
         glm::mat4 modelDirZ = glm::rotate(scale, glm::radians(0.0f), glm::vec3(0, 0, 1)); // Set t in radians to rotate object.
 
-        // Rotation to X direction
+        // Rotation to X direction. Positive rotation around Y -> looking in negative x-dir
         glm::mat4 modelDirX = glm::rotate(scale, glm::radians(90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
         
-        // Rotation to Y direction
-        glm::mat4 modelDirY = glm::rotate(scale, glm::radians(90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
+        // Rotation to Y direction. Negative rotation around X -> looking in negative y-dir
+        glm::mat4 modelDirY = glm::rotate(scale, glm::radians(-90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
+        // Have to rotate around Y also (Don't know why it don't align with Z without this, might be that rotation is left from x-dir rot)
+        modelDirY = glm::rotate(modelDirY, glm::radians(-90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
         
-        
-        // Rotation to Z direction
+        // Translations to make center of bunny in center of screen. 
         modelDirZ = glm::translate(modelDirZ, glm::vec3(0, -0.1, 0));
-
-        // Rotation to X direction
         modelDirX = glm::translate(modelDirX, glm::vec3(0, -0.1, 0));
-        
-        // Rotation to Y direction
         modelDirY = glm::translate(modelDirY, glm::vec3(0, -0.1, 0));
         
         
@@ -553,7 +553,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         glClearDepth(1.0);      // Let fragments less than 1 pass
 
         // Scale factor for depth values, to make min and max differ more.
-        float scaleFactor = 10;
+        float scaleFactor = 10; // Something magical with 10, might have something to do with voxel space bein 0-10 idk.
 
         depthShader->uploadFloat("scaleFactor", scaleFactor);
 
