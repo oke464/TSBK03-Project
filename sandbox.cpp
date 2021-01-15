@@ -125,20 +125,21 @@ void Sandbox::display()
     int wWidth, wHeight;
     glfwGetWindowSize(window, &wWidth, &wHeight);
     
-    Framebuffer depthFBO_Zmin(wWidth, wHeight);
-    Framebuffer depthFBO_Ymin(wWidth, wHeight);
-    Framebuffer depthFBO_Xmin(wWidth, wHeight);
-    Framebuffer depthFBO_Zmax(wWidth, wHeight);
-    Framebuffer depthFBO_Ymax(wWidth, wHeight);
-    Framebuffer depthFBO_Xmax(wWidth, wHeight);
-    
+    int texSize = 2048;
+    Framebuffer depthFBO_Zmin(texSize, texSize);
+    Framebuffer depthFBO_Ymin(texSize, texSize);
+    Framebuffer depthFBO_Xmin(texSize, texSize);
+    Framebuffer depthFBO_Zmax(texSize, texSize);
+    Framebuffer depthFBO_Ymax(texSize, texSize);
+    Framebuffer depthFBO_Xmax(texSize, texSize);
+/* Version2
     Framebuffer activeVoxelFBO_Zmin(wWidth, wHeight);
     Framebuffer activeVoxelFBO_Ymin(wWidth, wHeight);
     Framebuffer activeVoxelFBO_Xmin(wWidth, wHeight);
     Framebuffer activeVoxelFBO_Zmax(wWidth, wHeight);
     Framebuffer activeVoxelFBO_Ymax(wWidth, wHeight);
     Framebuffer activeVoxelFBO_Xmax(wWidth, wHeight);
-
+*/
 
     // This generates textures with depth data
     genereteFBODepthTextures(depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
@@ -154,7 +155,7 @@ void Sandbox::display()
             depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
             depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
 */
-
+/* Version2
     // Generate voxel active textures these are used to check in voxelmodel draw call.
     voxHandler->genActiveVoxelTextures(depthFBO_Zmin, activeVoxelFBO_Zmin);
     voxHandler->genActiveVoxelTextures(depthFBO_Xmin, activeVoxelFBO_Xmin);
@@ -162,7 +163,7 @@ void Sandbox::display()
     voxHandler->genActiveVoxelTextures(depthFBO_Zmax, activeVoxelFBO_Zmax);
     voxHandler->genActiveVoxelTextures(depthFBO_Xmax, activeVoxelFBO_Xmax);
     voxHandler->genActiveVoxelTextures(depthFBO_Ymax, activeVoxelFBO_Ymax);
-    
+*/    
     /*
 
     std::string sourcePath = __FILE__;
@@ -261,11 +262,14 @@ void Sandbox::display()
             depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
             depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
 */
-        
+/* Version 2
         voxHandler->drawVoxelModel2(view, projection, 
             activeVoxelFBO_Xmin, activeVoxelFBO_Ymin, activeVoxelFBO_Zmin, 
             activeVoxelFBO_Xmax, activeVoxelFBO_Ymax, activeVoxelFBO_Zmax);
-
+*/
+        voxHandler->drawVoxelModel3(view, projection, 
+            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
         // ------ For demo, display depth textures on quads around bunny
         // z-dir
         quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -318,7 +322,7 @@ void Sandbox::display()
         depthFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
         drawQuad();
         // ------
-
+/* Version3 
         // ------------ Demo display active voxeltextures
         float xOffset = -7.0f;
         // z-dir
@@ -372,7 +376,7 @@ void Sandbox::display()
         activeVoxelFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
         drawQuad();
         // ------
-
+*/
 
 
 /*
@@ -548,6 +552,11 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         glDepthFunc(GL_LESS);   // Make closest fragments pass, (nearest)
         glClearDepth(1.0);      // Let fragments less than 1 pass
 
+        // Scale factor for depth values, to make min and max differ more.
+        float scaleFactor = 10;
+
+        depthShader->uploadFloat("scaleFactor", scaleFactor);
+
         FBOZ.bindFBO();
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirZ);
@@ -562,7 +571,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirX);
         // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
         // Clear buffer, keep depth to use z-buffer in offscreen fbo
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Draw everything to offscreen buffer
@@ -572,7 +581,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirY);
         // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
         // Clear buffer, keep depth to use z-buffer in offscreen fbo
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Draw everything to offscreen buffer
@@ -589,7 +598,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirZ);
         // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
         // Clear buffer, keep depth to use z-buffer in offscreen fbo
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Draw everything to offscreen buffer
@@ -599,7 +608,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirX);
         // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
         // Clear buffer, keep depth to use z-buffer in offscreen fbo
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Draw everything to offscreen buffer
@@ -609,7 +618,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
         // Upload rot matrix
         depthShader->uploadMat4("model", modelDirY);
         // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
         // Clear buffer, keep depth to use z-buffer in offscreen fbo
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Draw everything to offscreen buffer

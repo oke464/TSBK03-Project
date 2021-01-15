@@ -19,6 +19,7 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
         voxelModelShader{new Shader("voxelModelShader.vert", "voxelModelShader.frag")},
         voxelModelShader2{new Shader("voxelModelShader2.vert", "voxelModelShader2.frag")},
         voxelActiveShader{new Shader("voxelActiveTest.vert", "voxelActiveTest.frag")},
+        voxelModelShader3{new Shader("voxelModelShader3.vert", "voxelModelShader3.frag")},
         
         quadVertices{
                 1.0f,  1.0f, 0.0f,  // top right
@@ -49,7 +50,7 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
         far{10},
         near{0},
         voxelModel{Model(modelPath)},
-        voxelSizeScale{1.0f},
+        voxelSizeScale{0.2f},
         objectSizeScale{1.0f}
 {   
     int wWidth, wHeight;
@@ -515,3 +516,49 @@ void VoxelHandler::drawVoxelModel2(glm::mat4 view, glm::mat4 proj,
 
 }
 
+void VoxelHandler::drawVoxelModel3(glm::mat4 view, glm::mat4 proj, 
+        Framebuffer FBOXmin, Framebuffer FBOYmin, Framebuffer FBOZmin, 
+        Framebuffer FBOXmax, Framebuffer FBOYmax, Framebuffer FBOZmax)
+{
+    // Bind screenFB
+    voxelPosFBO.bindScreenFB();
+
+    // Use correct shader
+    voxelModelShader3->useProgram();
+
+    // Upload view and projection matrices
+    // Pass sandbox camera
+    voxelModelShader3->uploadMat4("dView", view);
+    // Pass sandbox projection. 
+    voxelModelShader3->uploadMat4("dProj", proj);
+
+    // Upload all 6 depthbuffer textures
+    glActiveTexture(GL_TEXTURE0);
+    FBOXmin.bindTex(voxelModelShader3, "FBOXmin", 0);
+    glActiveTexture(GL_TEXTURE1);
+    FBOYmin.bindTex(voxelModelShader3, "FBOYmin", 1);
+    glActiveTexture(GL_TEXTURE2);
+    FBOZmin.bindTex(voxelModelShader3, "FBOZmin", 2);
+    glActiveTexture(GL_TEXTURE3);
+    FBOXmax.bindTex(voxelModelShader3, "FBOXmax", 3);
+    glActiveTexture(GL_TEXTURE4);
+    FBOYmax.bindTex(voxelModelShader3, "FBOYmax", 4);
+    glActiveTexture(GL_TEXTURE5);
+    FBOZmax.bindTex(voxelModelShader3, "FBOZmax", 5);
+
+    // Upload near and far to scale voxel positions to z-buffer coords
+    float near = 0.0f;
+    float far = 10.0f;
+    voxelModelShader3->uploadFloat("near", near);
+    voxelModelShader3->uploadFloat("far", far);
+
+    // Upload depthFBO width and height (change these to be the same later) use for transforming look-up coordinates.
+    // Supposed to be same for all FB0s 
+    voxelModelShader3->uploadFloat("texWidth", FBOXmax.width);
+    voxelModelShader3->uploadFloat("texHeight", FBOXmax.height);
+
+    // Bind and draw instanced
+    bindBuffersInstanced();
+    drawVoxelsInstanced(voxelModelShader3);
+
+}

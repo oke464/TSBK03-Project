@@ -7,6 +7,8 @@ in vec4 vertexColor; // the input variable from the vertex shader (same name and
 uniform float near;
 uniform float far;
 
+uniform float scaleFactor;
+
 // Function from wikipedia for orthographic projection, in which this shader should use.
 // Gives linearized value of depth [0,1] between near and far. When z_coord is in view coords. 
 float transformDepthVal(float z_viewCoord)
@@ -41,7 +43,8 @@ void main()
     float z = LinearizeDepth(gl_FragCoord.z);
 
     // Trying with plain fragcoord, looks linear to me.. 
-    FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
+    // Minus and plus half is to transform to 0,0 and then put a scale to separate the max and min texture a little bit. Makes z-depth only the best actually.
+    FragColor = vec4(vec3((gl_FragCoord.z - 0.5) * scaleFactor + 0.5) , 1.0);
     // -------------------------------------------------
 
 

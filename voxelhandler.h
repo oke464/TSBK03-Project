@@ -39,6 +39,10 @@ public:
             Framebuffer FBOXminActive, Framebuffer FBOYminActive, Framebuffer FBOZminActive, 
             Framebuffer FBOXmaxActive, Framebuffer FBOYmaxActive, Framebuffer FBOZmaxActive);
 
+    void drawVoxelModel3(glm::mat4 view, glm::mat4 proj, 
+            Framebuffer FBOXmin, Framebuffer FBOYmin, Framebuffer FBOZmin, 
+            Framebuffer FBOXmax, Framebuffer FBOYmax, Framebuffer FBOZmax);
+
 private:
     GLFWwindow* window;
     //Framebuffer voxelCoordsFBO;
@@ -50,6 +54,7 @@ private:
     Shader* voxelInitShader;
     Shader* voxelModelShader2;
     Shader* voxelActiveShader;
+    Shader* voxelModelShader3;
     Framebuffer voxelPosFBO;
     float near;
     float far;
