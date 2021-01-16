@@ -13,7 +13,7 @@ Sandbox::Sandbox(GLFWwindow* window) :
                 0.5f,  0.5f, 0.0f,  // top right
                 -0.5f,  0.5f, 0.0f   // top left 
                 },
-    quadIndices{  // note that we start from 0!
+    quadIndices{  
                 0, 1, 3,   // first triangle
                 1, 2, 3    // second triangle
                 },
@@ -40,20 +40,17 @@ Sandbox::Sandbox(GLFWwindow* window) :
     cubeShader(new Shader("cubeShader.vert", "cubeShader.frag")),
     voxHandler{new VoxelHandler(window, "assets/models/cubeplus.obj", 0.5f)},
     bunnyToggle{false}
-    
-
 {
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
     // Window width Height
     int wWidth, wHeight;
     glfwGetWindowSize(window, &wWidth, &wHeight);
+    // aspect ratio = wWidth / wHeight
     projection = glm::perspective(glm::radians(45.0f), (float)(wWidth / wHeight), 0.1f, 100.0f);
 
     glfwSetWindowUserPointer(window, this);
     glfwSetScrollCallback(window, scrollCallback);
-
-    
 }
 
 Sandbox::~Sandbox()
@@ -69,7 +66,6 @@ Sandbox::~Sandbox()
 // Simple input handling function
 void Sandbox::processInput()
 {
-
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
@@ -125,6 +121,7 @@ void Sandbox::display()
     int wWidth, wHeight;
     glfwGetWindowSize(window, &wWidth, &wHeight);
     
+    // Create a decent sized texture to get good enough resolution.
     int texSize = 2048;
     Framebuffer depthFBO_Zmin(texSize, texSize);
     Framebuffer depthFBO_Ymin(texSize, texSize);
@@ -164,16 +161,7 @@ void Sandbox::display()
     voxHandler->genActiveVoxelTextures(depthFBO_Xmax, activeVoxelFBO_Xmax);
     voxHandler->genActiveVoxelTextures(depthFBO_Ymax, activeVoxelFBO_Ymax);
 */    
-    /*
-
-    std::string sourcePath = __FILE__;
-    std::string dirPath = sourcePath.substr(0, sourcePath.rfind("/"));
-
-    std::string modelPath = std::string(dirPath);
-    modelPath.append("/").append("assets/models/stanford-bunny.obj");
-
-    Model bunnyModel(modelPath);
-    */
+    
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -186,11 +174,6 @@ void Sandbox::display()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // ### Render here #######
-        //drawQuad();
-        //sandboxShader->useProgram(); // For now tileShader == sandboxShader
-        //sandboxShader->uploadMat4("projection", projection);
-        //sandboxShader->uploadMat4("view", view);
-
         float t = glfwGetTime() * 100;
 
         float currTime = glfwGetTime();
@@ -199,7 +182,7 @@ void Sandbox::display()
 
         if (bunnyToggle)
         { 
-    // --------- TEMPORARY TO SHOW bunny in screen fbo
+            // --------- To bunny in screen fbo, click "b" in program
             depthShader->useProgram();
             // Bind FBO to get output.
 
@@ -233,15 +216,16 @@ void Sandbox::display()
             // Update translation vector dep on time
             transVec += deltaT * moveDir;
             glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(5,5,5));
-            glm::mat4 trans = glm::translate(scale, transVec);
 
             // Rotation to Z direction
-            glm::mat4 model = glm::rotate(trans, glm::radians(t), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
+            glm::mat4 rotation = glm::rotate(scale, glm::radians(t), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
 
+            glm::mat4 model = glm::translate(rotation, transVec);
+            
             depthShader->uploadMat4("model", model);
             // Draw everything to offscreen buffer
             bunny.draw(*depthShader);
-    // --------- 
+            // --------- 
         }
 
 
@@ -267,9 +251,21 @@ void Sandbox::display()
             activeVoxelFBO_Xmin, activeVoxelFBO_Ymin, activeVoxelFBO_Zmin, 
             activeVoxelFBO_Xmax, activeVoxelFBO_Ymax, activeVoxelFBO_Zmax);
 */
+
         voxHandler->drawVoxelModel3(view, projection, 
+            glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+            glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 5.0f, -5.0f)),
+            0.5f,
             depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
             depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
+
+        voxHandler->drawVoxelModel3(view, projection, 
+            glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+            glm::translate(glm::mat4(1.0f), glm::vec3(12.0f, 5.0f, -5.0f)),
+            0.5f,
+            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
+
         // ------ For demo, display depth textures on quads around bunny
         // z-dir
         quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -377,29 +373,11 @@ void Sandbox::display()
         drawQuad();
         // ------
 */
-
-
-/*
-        // *** Texting voxel inits
-        cubeShader->useProgram();
-        // Upload matrices and draw cube
-        cubeShader->uploadMat4("projection", projection);
-        cubeShader->uploadMat4("view", view);
-        cube.setScale(glm::vec3(5.0f, 5.0f, 5.0f));
-        cube.setPosition(glm::vec3(15.0f, 5.0f, -10.0f));
-        cube.updateTransformation();
-        // set active texture to the one from fbo
-        glActiveTexture(GL_TEXTURE0);
-        //voxHandler->getInitFBO().bindTex(cubeShader, "texUnit", 0);
-        activeVoxelFBO_Zmin.bindTex(cubeShader, "texUnit", 0);
-        cubeShader->uploadMat4("model", cube.getTransformation());
-        cube.draw(*cubeShader);
-*/
         // ------------------------------------
 
 
         // ------------ Things in scene ----------------------
-        //bottomTiles->drawTiles(sandboxShader, projection, view);
+        // Tiles bottom
         sandboxShader->useProgram();
         sandboxShader->uploadMat4("projection", projection);
         sandboxShader->uploadMat4("view", view);
@@ -417,53 +395,10 @@ void Sandbox::display()
         bunny.updateTransformation();
         bunnyShader->uploadMat4("model", bunny.getTransformation());
         bunny.draw(*bunnyShader);
-/*       
-        // Draw sphere
-        bunnyShader->useProgram();
-        bunnyShader->uploadMat4("projection", projection);
-        bunnyShader->uploadMat4("view", view);
-        sphere.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-        sphere.setScale(glm::vec3(1.0f, 1.0f, 1.0f));
-        sphere.updateTransformation();
-        bunnyShader->uploadMat4("model", sphere.getTransformation());
-        sphere.draw(*bunnyShader);
-*/
+
         // ------------------------------------
-
-/*  This is example to load texture
-        unsigned int texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        // set the texture wrapping/filtering options (on the currently bound texture object)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        // load and generate the texture
-        int width, height, nrChannels;
-        unsigned char *data = stbi_load("assets/textures/maskros512.tga", &width, &height, &nrChannels, 0);
-        if (data)
-        {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-            
-        }
-        else
-        {
-            std::cout << "Failed to load texture" << std::endl;
-        }
-        stbi_image_free(data);
-*/      
-
-
-
         //std::cout << glGetError() << std::endl;
-// If you want to see on screen fbo, uncomment and make sure function renders to screenfb
-// see genVoxelPositions() in voxelhandler.cpp beginning
-/*
-        voxHandler->genVoxelPositions(view, projection, 
-            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
-            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
-*/
+
         // #######################
 
         // Swap front and back buffers 
@@ -481,281 +416,144 @@ void Sandbox::initShaders()
 void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
                 Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater)
 {
-            // ----------- DEPTH TESTING STUFF ----------------
-        //std::cout << deltaT << std::endl;
-        depthShader->useProgram();
-        // Bind FBO to get output.
+    // ----------- DEPTH TESTING STUFF ----------------
+    //std::cout << deltaT << std::endl;
+    depthShader->useProgram();
+    // Bind FBO to get output.
 
-        // Create camera for depth buffer generator
-        glm::vec3 dPos(0, 0, 5);
-        glm::vec3 dFront(0, 0, -1);
-        glm::vec3 dUp(0, 1, 0);
-        glm::mat4 depthView = glm::lookAt(dPos, glm::vec3(0, 0, 0), dUp);
-        depthShader->uploadMat4("dView", depthView);
-        
-        // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.
-        float left = -0.5f;
-        float right = 0.5f;
-        float bottom = -0.5f;
-        float top = 0.5f;
-        float near = 0.0f;
-        float far = 10.0f;
-        glm::mat4 depthProj = glm::ortho(left, right, bottom, top, near, far);
-        depthShader->uploadMat4("dProj", depthProj);
-        depthShader->uploadFloat("near", near);
-        depthShader->uploadFloat("far", far);
+    // Create camera for depth buffer generator
+    glm::vec3 dPos(0, 0, 5);
+    glm::vec3 dFront(0, 0, -1);
+    glm::vec3 dUp(0, 1, 0);
+    glm::mat4 depthView = glm::lookAt(dPos, glm::vec3(0, 0, 0), dUp);
+    depthShader->uploadMat4("dView", depthView);
+    
+    // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.
+    float left = -0.5f;
+    float right = 0.5f;
+    float bottom = -0.5f;
+    float top = 0.5f;
+    float near = 0.0f;
+    float far = 10.0f;
+    glm::mat4 depthProj = glm::ortho(left, right, bottom, top, near, far);
+    depthShader->uploadMat4("dProj", depthProj);
+    depthShader->uploadFloat("near", near);
+    depthShader->uploadFloat("far", far);
 
-        /*
-        // Update translation vector dep on time
-        transVec += deltaT * moveDir;
-        //std::cout << transVec.z << std::endl;
-        */
+    // --- Draw model 3 times rotated along axises one time with depth func 
+    // greater and one with less to get depth values from each side. 
+    // Create model = rot * trans 
 
-        // --- Draw model 3 times rotated along axises one time with depth func 
-        // greater and one with less to get depth values from each side. 
-        // Create model = rot * trans 
-        //glm::mat4 trans = glm::translate(glm::mat4(1.0f), transVec);
+    // Scale all to a decent size, otherwise the depthbuffer will have small margins.
+    // Resulting in no voxels inside object...
+    glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(5,5,5));
 
-        // Scale all to a decent size, otherwise the depthbuffer will have small margins.
-        // Resulting in no voxels inside object...
-        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(5,5,5));
+    // THE GLM math lib SEEMS TO apply first function call last for some reason (left to right) so call translate last -> applies first
+    // Translates BUNNY's center to center of screen
+    glm::mat4 trans = glm::translate(scale, glm::vec3(0, -0.1, 0)); 
 
-        // THIS API SEEMS TO apply first function call last for some reason (left to right) so call translate last -> applies first
-        // Translates BUNNY's center to center of screen
-        glm::mat4 trans = glm::translate(scale, glm::vec3(0, -0.1, 0)); 
+    // --- Rotations
+    //      By default we look in negative z-direction. To make all depth buffers align we have to rotate the object to look in negative x and negative y direction respectively. 
+    //      Then we can make our depth test textures with the same testfunction.
+    // Rotation to Z direction
+    glm::mat4 modelDirZ = glm::rotate(scale, glm::radians(0.0f), glm::vec3(0, 0, 1)); // Set t in radians to rotate object.
 
-        // --- Rotations
-        //      By default we look in negative z-direction. To make all depth buffers align we have to rotate the object to look in negative x and negative y direction respectively. 
-        //      Then we can make our depth test textures with the same testfunction.
-        // Rotation to Z direction
-        glm::mat4 modelDirZ = glm::rotate(scale, glm::radians(0.0f), glm::vec3(0, 0, 1)); // Set t in radians to rotate object.
+    // Rotation to X direction. Positive rotation around Y -> looking in negative x-dir
+    glm::mat4 modelDirX = glm::rotate(scale, glm::radians(90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
+    
+    // Rotation to Y direction. Negative rotation around X -> looking in negative y-dir
+    glm::mat4 modelDirY = glm::rotate(scale, glm::radians(-90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
+    // Have to rotate around Y also (Don't know why it don't align with Z without this, might be that rotation is left from x-dir rot)
+    modelDirY = glm::rotate(modelDirY, glm::radians(-90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
+    
+    // Translations to make center of bunny in center of screen. 
+    modelDirZ = glm::translate(modelDirZ, glm::vec3(0, -0.1, 0));
+    modelDirX = glm::translate(modelDirX, glm::vec3(0, -0.1, 0));
+    modelDirY = glm::translate(modelDirY, glm::vec3(0, -0.1, 0));
+    
+    // --- Bind each FBO and draw accordingly
+    // *** With setting less on*
+    // Depthbuffer settings
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);   // Make closest fragments pass, (nearest)
+    glClearDepth(1.0);      // Let fragments less than 1 pass
 
-        // Rotation to X direction. Positive rotation around Y -> looking in negative x-dir
-        glm::mat4 modelDirX = glm::rotate(scale, glm::radians(90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
-        
-        // Rotation to Y direction. Negative rotation around X -> looking in negative y-dir
-        glm::mat4 modelDirY = glm::rotate(scale, glm::radians(-90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
-        // Have to rotate around Y also (Don't know why it don't align with Z without this, might be that rotation is left from x-dir rot)
-        modelDirY = glm::rotate(modelDirY, glm::radians(-90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
-        
-        // Translations to make center of bunny in center of screen. 
-        modelDirZ = glm::translate(modelDirZ, glm::vec3(0, -0.1, 0));
-        modelDirX = glm::translate(modelDirX, glm::vec3(0, -0.1, 0));
-        modelDirY = glm::translate(modelDirY, glm::vec3(0, -0.1, 0));
-        
-        
+    // Scale factor for depth values, to make min and max differ more.
+    float scaleFactor = 10; // Something magical with 10, might have something to do with voxel space bein 0-10 idk.
 
-        // --- Bind each FBO and draw accordingly
-        // *** With setting less on*
-        // Depthbuffer settings
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);   // Make closest fragments pass, (nearest)
-        glClearDepth(1.0);      // Let fragments less than 1 pass
+    depthShader->uploadFloat("scaleFactor", scaleFactor);
 
-        // Scale factor for depth values, to make min and max differ more.
-        float scaleFactor = 10; // Something magical with 10, might have something to do with voxel space bein 0-10 idk.
+    FBOZ.bindFBO();
+    // Upload rot matrix
+    depthShader->uploadMat4("model", modelDirZ);
+    // Set backgroundcolor
+    glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
+    // Clear buffer, keep depth to use z-buffer in offscreen fbo
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Draw everything to offscreen buffer
+    bunny.draw(*depthShader);
 
-        depthShader->uploadFloat("scaleFactor", scaleFactor);
+    FBOX.bindFBO();
+    // Upload rot matrix
+    depthShader->uploadMat4("model", modelDirX);
+    // Set backgroundcolor
+    glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
+    // Clear buffer, keep depth to use z-buffer in offscreen fbo
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Draw everything to offscreen buffer
+    bunny.draw(*depthShader);
 
-        FBOZ.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirZ);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
+    FBOY.bindFBO();
+    // Upload rot matrix
+    depthShader->uploadMat4("model", modelDirY);
+    // Set backgroundcolor
+    glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
+    // Clear buffer, keep depth to use z-buffer in offscreen fbo
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Draw everything to offscreen buffer
+    bunny.draw(*depthShader);
+    // *** 
 
-        FBOX.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirX);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
+    // *** With setting greater on*
+    // Depthbuffer settings
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_GREATER);    // Make furthest fragments pass, (nearest)
+    glClearDepth(0.0);          // Have to set depth test to zero else nothing will pass
 
-        FBOY.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirY);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-        // *** 
+    FBOZGreater.bindFBO();
+    // Upload rot matrix
+    depthShader->uploadMat4("model", modelDirZ);
+    // Set backgroundcolor
+    glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
+    // Clear buffer, keep depth to use z-buffer in offscreen fbo
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Draw everything to offscreen buffer
+    bunny.draw(*depthShader);
 
-        // *** With setting greater on*
-        // Depthbuffer settings
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_GREATER);    // Make furthest fragments pass, (nearest)
-        glClearDepth(0.0);          // Have to set depth test to zero else nothing will pass
+    FBOXGreater.bindFBO();
+    // Upload rot matrix
+    depthShader->uploadMat4("model", modelDirX);
+    // Set backgroundcolor
+    glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
+    // Clear buffer, keep depth to use z-buffer in offscreen fbo
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Draw everything to offscreen buffer
+    bunny.draw(*depthShader);
 
-        FBOZGreater.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirZ);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
+    FBOYGreater.bindFBO();
+    // Upload rot matrix
+    depthShader->uploadMat4("model", modelDirY);
+    // Set backgroundcolor
+    glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
+    // Clear buffer, keep depth to use z-buffer in offscreen fbo
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Draw everything to offscreen buffer
+    bunny.draw(*depthShader);
+    // *** 
 
-        FBOXGreater.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirX);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-
-        FBOYGreater.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirY);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 0.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-        // *** 
-
-        // Binds default screen FB back, do not really like this as a memberfunction
-        FBOZ.bindScreenFB(); 
-        // ------------------------------------
-
-
-
-
-/* PASTE THIS ABOVE FUNCTION CALL IN DISPLAY TO GET ORIGINAL 
-        // ----------- DEPTH TESTING STUFF ----------------
-        //std::cout << deltaT << std::endl;
-        depthShader->useProgram();
-        // Bind FBO to get output.
-
-        // Create camera for depth buffer generator
-        glm::vec3 dPos(0, 0, 5);
-        glm::vec3 dFront(0, 0, -1);
-        glm::vec3 dUp(0, 1, 0);
-        glm::mat4 depthView = glm::lookAt(dPos, glm::vec3(0, 0, 0), dUp);
-        depthShader->uploadMat4("dView", depthView);
-        
-        // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.
-        float left = -0.5f;
-        float right = 0.5f;
-        float bottom = -0.5f;
-        float top = 0.5f;
-        float near = 0.0f;
-        float far = 10.0f;
-        glm::mat4 depthProj = glm::ortho(left, right, bottom, top, near, far);
-        depthShader->uploadMat4("dProj", depthProj);
-        depthShader->uploadFloat("near", near);
-        depthShader->uploadFloat("far", far);
-
-        // Update translation vector dep on time
-        transVec += deltaT * moveDir;
-        //std::cout << transVec.z << std::endl;
-        
-
-        // --- Draw model 3 times rotated along axises one time with depth func 
-        // greater and one with less to get depth values from each side. 
-        // Create model = rot * trans 
-        glm::mat4 trans = glm::translate(glm::mat4(1.0f), transVec);
-
-        // Rotation to Z direction
-        glm::mat4 modelDirZ = glm::rotate(trans, glm::radians(0.0f), glm::vec3(0, 0, 1)); // Set t in radians to rotate object.
-
-        // Rotation to X direction
-        glm::mat4 modelDirX = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
-
-        // Rotation to Y direction
-        glm::mat4 modelDirY = glm::rotate(trans, glm::radians(90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
-        
-
-        // --- Bind each FBO and draw accordingly
-        // *** With setting less on*
-        // Depthbuffer settings
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);   // Make closest fragments pass, (nearest)
-        glClearDepth(1.0);      // Let fragments less than 1 pass
-
-        depthFBO_Zmin.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirZ);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-
-        depthFBO_Xmin.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirX);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-
-        depthFBO_Ymin.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirY);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-        // *** 
-
-        // *** With setting greater on*
-        // Depthbuffer settings
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_GREATER);    // Make furthest fragments pass, (nearest)
-        glClearDepth(0.0);          // Have to set depth test to zero else nothing will pass
-
-        depthFBO_Zmax.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirZ);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-
-        depthFBO_Xmax.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirX);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-
-        depthFBO_Ymax.bindFBO();
-        // Upload rot matrix
-        depthShader->uploadMat4("model", modelDirY);
-        // Set backgroundcolor
-        glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
-        // Clear buffer, keep depth to use z-buffer in offscreen fbo
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw everything to offscreen buffer
-        bunny.draw(*depthShader);
-        // *** 
-
-        // Binds default screen FB back, do not really like this as a memberfunction
-        depthFBO_Zmin.bindScreenFB(); 
-        // ------------------------------------
-*/
+    // Binds default screen FB back, do not really like this as a memberfunction
+    FBOZ.bindScreenFB(); 
+    // ------------------------------------
 }
 
 void Sandbox::drawTriangle()
@@ -779,8 +577,6 @@ void Sandbox::drawTriangle()
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
-
-
 
     // draw our first triangle
     glUseProgram(sandboxShader->shaderID);

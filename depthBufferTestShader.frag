@@ -46,17 +46,4 @@ void main()
     // Minus and plus half is to transform to 0,0 and then put a scale to separate the max and min texture a little bit. Makes z-depth only the best actually.
     FragColor = vec4(vec3((gl_FragCoord.z - 0.5) * scaleFactor + 0.5) , 1.0);
     // -------------------------------------------------
-
-
-    const vec3 light = vec3(0.58, 0.58, 0.58); 
-	float diffuse, specular, shade;
-
-	// Diffuse
-	diffuse = dot(normalize(outNormal), light);
-	diffuse = max(0.0, diffuse); // No negative light
-
-	shade = 0.7 * diffuse;
-	
-    // Uncomment this to get regular texture
-    //FragColor = vec4(shade* vertexColor.x, shade * vertexColor.y, shade * vertexColor.z, 1.0);
 } 

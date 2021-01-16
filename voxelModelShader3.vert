@@ -24,15 +24,17 @@ uniform float texWidth;
 uniform float texHeight;
 
 uniform float modelScaleFactor;
+uniform mat4 modelRotation;
+uniform mat4 modelTranslation;
+uniform mat4 originTranslation;
 
 out vec2 outTexCoord;
-
-
-// Use gl_InstanceID for getting the instnace number
+out vec3 outNormal;
 
 void main()
 {
     outTexCoord = aTexCoords;
+    outNormal = aNormal;
 
     // Transform voxel position coords to "look-up" coordinates for a 2D texture. 
     // For instance in x-direction, our "look-up" space is the yz-plane (yz component of voxPos), 
@@ -53,7 +55,6 @@ void main()
     float voxPosDepthY = voxPos.y / (far - near); 
     float voxPosDepthZ = - voxPos.z / (far - near); 
     
-
     // Fetch texel on transformed coordinate from voxel position. This is the comparison value for each component. 
     // offset a little bit to make more difference between min and max
     float offset = 0.5;
@@ -69,42 +70,31 @@ void main()
     vec4 zMinDepth = texelFetch(FBOZmin, ivec2(xWidthLookUp, yHeightLookUp), 0);
     vec4 zMaxDepth = texelFetch(FBOZmax, ivec2(xWidthLookUp, yHeightLookUp), 0);
 
+    // Create scale matrix from scalefactor passed from host program. 
     mat4 scaleMatrix = mat4(0);
     scaleMatrix[0][0] = modelScaleFactor;
     scaleMatrix[1][1] = modelScaleFactor;
     scaleMatrix[2][2] = modelScaleFactor;
     scaleMatrix[3][3] = 1;
     
-    // Check if voxel is active, within constraints of depthdata. 
-    // Can use either .x .y or .z component since depth data is grey
     // If alpha channel == 0 then we have background color so don't skip if so.
     // It does not seem to be needed because the other tests filters this by default.
     //if (xMinDepth.a != 0 && xMaxDepth.a != 0 && yMinDepth.a != 0 && yMaxDepth.a != 0 && zMinDepth.a != 0 && zMaxDepth.a != 0)
     //{
+
+        // Check if voxel is active, within constraints of depthdata. 
+        // Can use either .x .y or .z component since depth data is grey (all components have same value)
         if (voxPosDepthX >= (xMinDepth.x) && voxPosDepthX <= (xMaxDepth.x))
         {
             if (voxPosDepthY >= (yMinDepth.x) && voxPosDepthY <= (yMaxDepth.x))
             {
                 if (voxPosDepthZ >= (zMinDepth.x) && voxPosDepthZ <= (zMaxDepth.x))
                 {
-                    gl_Position = dProj * dView * scaleMatrix * voxMod * vec4(aPos, 1.0); 
-                    vertexColor = vec4(voxPosDepthX, voxPosDepthY, -voxPosDepthZ, 1.0);
+                    gl_Position = dProj * dView * scaleMatrix * modelTranslation * modelRotation * originTranslation * voxMod * vec4(aPos, 1.0); 
+                    vertexColor = vec4(voxPosDepthX, voxPosDepthY, voxPosDepthZ, 1.0);
                 }
             }
         }
 
     //}
-
-    // Only draw boxes if position is active
-    // if(texPos.a == 1)
-    // {
-    //     gl_Position = dProj * dView * voxMod * vec4(aPos, 1.0); 
-    //     //vertexColor = vec4(voxPos.x, voxPos.y, -voxPos.z, 1.0) / 10;   
-    //     vertexColor = vec4(texPos.xy, -texPos.z, 1.0);
-           
-    // }
-    
-    // gl_Position = dProj * dView * voxMod * vec4(aPos, 1.0); 
-    // //vertexColor = vec4(texPos.xy, -texPos.z, 1.0);
-    // vertexColor = vec4(voxPos.xy, -voxPos.z, 1.0) / 10;
 }

@@ -1,14 +1,5 @@
 #include "voxelhandler.h"
 
-/*
-struct Voxel
-{
-    glm::vec3 position;
-    bool active; 
-
-}Voxel;
-*/
-
 //Provide the initialized window, path to model and it's radius. 
 VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const float & modelRadius)
     :   window{window},
@@ -27,18 +18,10 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
                 -1.0f, -1.0f, 0.0f,  // bottom left
                 -1.0f,  1.0f, 0.0f   // top left 
                 },
-        
-       
-        //quadVertices{ -1,-1,0, -1,1, 0, 1,1, 0, 1,-1, 0},
-        
-       
         quadIndices{  
                     0, 1, 3,   // first triangle
                     1, 2, 3    // second triangle
                     },
-       
-       //quadIndices{0, 1, 2, 0, 2, 3},
-
         voxelRadius{modelRadius},
         squareTexCoord{ 
                         0, 0,
@@ -55,8 +38,6 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
 {   
     int wWidth, wHeight;
     glfwGetWindowSize(window, &wWidth, &wHeight);
-
-    //voxelCoordsFBO = Framebuffer(wWidth, wHeight);
 
     // Generate voxelpositions based on voxelradius and far/voxelbox
     float offset = 2 * voxelRadius * voxelSizeScale;
@@ -78,7 +59,7 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
         }   
     }
 
-    std::cout << "Voxels amount: " << voxelPositions.size() << std::endl;
+    std::cout << "Voxels amount per model: " << voxelPositions.size() << std::endl;
 
     // Init with amount of voxels to access by instance number in vertshader. 
     //voxelPosFBO = Framebuffer(voxelPositions.size(), voxelPositions.size());
@@ -516,6 +497,7 @@ void VoxelHandler::drawVoxelModel2(glm::mat4 view, glm::mat4 proj,
 }
 
 void VoxelHandler::drawVoxelModel3(glm::mat4 view, glm::mat4 proj, 
+        glm::mat4 rotation, glm::mat4 translation, float modelScale,   
         Framebuffer FBOXmin, Framebuffer FBOYmin, Framebuffer FBOZmin, 
         Framebuffer FBOXmax, Framebuffer FBOYmax, Framebuffer FBOZmax)
 {
@@ -556,8 +538,14 @@ void VoxelHandler::drawVoxelModel3(glm::mat4 view, glm::mat4 proj,
     voxelModelShader3->uploadFloat("texWidth", FBOXmax.width);
     voxelModelShader3->uploadFloat("texHeight", FBOXmax.height);
 
-    // Upload model scaling to make entire object smaller if desired.
-    voxelModelShader3->uploadFloat("modelScaleFactor", modelSizeScale);
+    // Upload model scaling, rotaion, translation if desired.
+    voxelModelShader3->uploadFloat("modelScaleFactor", modelScale);
+    voxelModelShader3->uploadMat4("modelRotation", rotation);
+    voxelModelShader3->uploadMat4("modelTranslation", translation);
+
+    // This translates voxel space x: [0,10]; y: [0,10]; z: [0,-10]. To be in origin such that: x: [-5,5]; y: [-5,5]; z: [5,-5].
+    // Then we can apply translation and rotation as we are used to. 
+    voxelModelShader3->uploadMat4("originTranslation", glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, -5.0f, 5.0f)));
 
     // Bind and draw instanced
     bindBuffersInstanced();

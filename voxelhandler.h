@@ -40,6 +40,7 @@ public:
             Framebuffer FBOXmaxActive, Framebuffer FBOYmaxActive, Framebuffer FBOZmaxActive);
 
     void drawVoxelModel3(glm::mat4 view, glm::mat4 proj, 
+            glm::mat4 rotation, glm::mat4 translation, float modelScale,   
             Framebuffer FBOXmin, Framebuffer FBOYmin, Framebuffer FBOZmin, 
             Framebuffer FBOXmax, Framebuffer FBOYmax, Framebuffer FBOZmax);
 
