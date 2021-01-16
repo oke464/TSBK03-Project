@@ -79,44 +79,4 @@ GLFWwindow* initGLFW_GLAD()
 }
 
 
-/* Now done in sandbox
-// Simple input handling function
-void processInput(GLFWwindow *window)
-{
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
-*/ 
-/* Now done in sandbox! 
-void display(GLFWwindow* window)
-{
-    glEnable(GL_DEPTH_TEST);
-    Sandbox sandbox = Sandbox();
-
-    // Loop until the user closes the window 
-    while (!glfwWindowShouldClose(window))
-    {
-        // Handle inputs
-        processInput(window);
- 
-        // Set backgroundcolor
-        glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
-
-        // Clear buffer 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Render here
-        sandbox.drawTriangle();
-
-        sandbox.drawQuad();
-
-        // Swap front and back buffers 
-        glfwSwapBuffers(window);
-
-        // Poll for and process events 
-        glfwPollEvents();
-
-    }
-}
-*/
 

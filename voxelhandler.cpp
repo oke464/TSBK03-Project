@@ -3,7 +3,6 @@
 //Provide the initialized window, path to model and it's radius. 
 VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const float & modelRadius)
     :   window{window},
-        //voxelCoordsFBO{Framebuffer(1,1)},
         voxelShader{new Shader("voxelShader.vert", "voxelShader.frag")},
         voxelInitShader{new Shader("voxelInitShader.vert", "voxelInitShader.frag")},
         voxelLatticeShader{new Shader("voxelLatticeShader.vert", "voxelLatticeShader.frag")},
@@ -29,48 +28,47 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
                         1, 1,
                         1, 0
                       },
+
         voxelPosFBO{Framebuffer(1,1)},
         far{10},
         near{0},
         voxelModel{Model(modelPath)},
-        voxelSizeScale{0.2f},
+        voxelSizeScale{0.25f}, // Change voxel size here (size of cubes). 0.3f has good performance, but low resolution. 
         modelSizeScale{1.0f}
 {   
-    int wWidth, wHeight;
-    glfwGetWindowSize(window, &wWidth, &wHeight);
-
-    // Generate voxelpositions based on voxelradius and far/voxelbox
+    // This creates an offset where to place neighbouring voxel based on the scale size and radius (radius is sidelength for cube), 
+    // in order to fill the entire voxelspace with packed voxels.
     float offset = 2 * voxelRadius * voxelSizeScale;
 
-    //glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0,1,0));
+    // Generate voxelpositions based on voxelradius and far/voxelbox
+    // This generates the voxel positions in the orthographic frustum [0,10].
+    // Calling it the voxelSpace. 
     for (float i = near; i < far; i+=offset)
     {
         for (float j = near; j < far; j+=offset)
         {
             for (float k = near; k < far; k+=offset)
             {
-                // Last argument is 0 indicates inactive particle.
+                // Create vec3 for voxel position. And mat4 as transformation matrix that will be uploaded to shader.
+                // Only the matrix is used in final version.
                 voxelPositions.push_back(glm::vec3(i, j, -k));
                 glm::vec3 pos = glm::vec3(i, j, -k);
-                //std::cout << "Voxels pos: " << pos.x << "  " <<  pos.y << "  " << pos.z << std::endl;   
-                
                 voxelPositionMatrices.push_back(glm::scale(glm::translate(glm::mat4(1.0f), pos), glm::vec3(voxelSizeScale)));
             }
         }   
     }
 
     std::cout << "Voxels amount per model: " << voxelPositions.size() << std::endl;
-
-    // Init with amount of voxels to access by instance number in vertshader. 
-    //voxelPosFBO = Framebuffer(voxelPositions.size(), voxelPositions.size());
-    //voxelPosFBO = Framebuffer(voxelPositions.size(), 1);
-    voxelPosFBO = Framebuffer(wWidth, wHeight);
     
     std::cout << "Voxelmodel meshes: " << voxelModel.meshes.size() << std::endl;
 
-    bindBuffersInstanced();
-    bindInitBuffersInstanced();
-    //initVoxelPosTexture();
+    /* These are some initializations of FBOs tested, not used for version 3 (final version) voxelization. */
+    // Init with amount of voxels to access by instance number in vertshader. 
+    //voxelPosFBO = Framebuffer(voxelPositions.size(), voxelPositions.size());
+    //voxelPosFBO = Framebuffer(voxelPositions.size(), 1);
+    int wWidth, wHeight;
+    glfwGetWindowSize(window, &wWidth, &wHeight);
+    voxelPosFBO = Framebuffer(wWidth, wHeight);
 }
 
 VoxelHandler::~VoxelHandler()
@@ -79,6 +77,9 @@ VoxelHandler::~VoxelHandler()
     delete voxelLatticeShader;
     delete voxelModelShader;
     delete voxelInitShader;
+    delete voxelModelShader2;
+    delete voxelActiveShader;
+    delete voxelModelShader3;
 }
 
 void VoxelHandler::initVoxelPosTexture()
@@ -180,9 +181,6 @@ void VoxelHandler::bindBuffersInstanced()
     glBindVertexArray(VAO);
     // set the vertex attribute pointers # WARNING # Uses Vertex struct in mashes class
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // A great thing about structs is that their memory layout is sequential for all its items.
-    // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
-    // again translates to 3/2 floats which translates to a byte array.
 
     // Fetching the data hardcoded like this is a hack to utilized the model loader, note that we get the first index, this works 
     // because we only have one mesh for a square, don't know what happens if we were to have multiple meshes. 
@@ -199,24 +197,21 @@ void VoxelHandler::bindBuffersInstanced()
     // vertex texture coords
     glEnableVertexAttribArray(2);	
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-    // vertex tangent
+    // vertex tangent /* NOT USED IN SHADER */
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
-    // vertex bitangent
+    // vertex bitangent /* NOT USED IN SHADER */
     glEnableVertexAttribArray(4);
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
-    
 
-    // Bind positions 
+    // Bind positions /* NOT USED IN SHADER */ 
     glBindVertexArray(VAO);
     glGenBuffers(1, &voxPosBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, voxPosBuffer);
-    //std::cout << voxelPositions.size() << std::endl;
     glBufferData(GL_ARRAY_BUFFER, voxelPositions.size() * sizeof(glm::vec3), &voxelPositions[0], GL_STATIC_DRAW);
     glEnableVertexAttribArray(6);
     glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glVertexAttribDivisor(6, 1);
-
 
     // Bind transformation matrices 
     glGenBuffers(1, &modelMatrixBuffer);
@@ -224,8 +219,8 @@ void VoxelHandler::bindBuffersInstanced()
     glBufferData(GL_ARRAY_BUFFER, voxelPositions.size() * sizeof(glm::mat4), &voxelPositionMatrices[0], GL_STATIC_DRAW);
 
     glBindVertexArray(VAO);
-    // vertex attributes
     std::size_t vec4Size = sizeof(glm::vec4);
+    // Uploads matrix row by row
     glEnableVertexAttribArray(7); 
     glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
     glEnableVertexAttribArray(8); 
@@ -234,7 +229,6 @@ void VoxelHandler::bindBuffersInstanced()
     glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
     glEnableVertexAttribArray(10); 
     glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
-    
 
     glVertexAttribDivisor(7, 1);
     glVertexAttribDivisor(8, 1);
@@ -243,10 +237,9 @@ void VoxelHandler::bindBuffersInstanced()
 
     glBindVertexArray(0);
 }
-    
+
 void VoxelHandler::bindInitBuffersInstanced()
 {
-    // create buffers/arrays
     glGenVertexArrays(1, &VAO2);
     glGenBuffers(1, &VBO2);
     glGenBuffers(1, &EBO2);
@@ -262,16 +255,12 @@ void VoxelHandler::bindInitBuffersInstanced()
     glEnableVertexAttribArray(0);	
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     
-
+    // Vertex texture coords. One per instance so no attribDivisor.
     glGenBuffers(1, &squareTexCoordBuffer2);
     glBindBuffer(GL_ARRAY_BUFFER, squareTexCoordBuffer2);
     glBufferData(GL_ARRAY_BUFFER, sizeof(squareTexCoord), squareTexCoord, GL_STATIC_DRAW);  
-    // vertex texture coords
     glEnableVertexAttribArray(2);	
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
-   
-    //glVertexAttribDivisor(2, 1);
-
    
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
@@ -306,8 +295,9 @@ void VoxelHandler::drawVoxelsInstanced(Shader* shader)
 {
     shader->useProgram();
     glBindVertexArray(VAO);
+    // Draw instanced
+    // Again this is hack to utilize model loader to get the indices.
     glDrawElementsInstanced(GL_TRIANGLES, voxelModel.meshes[0].indices.size(), GL_UNSIGNED_INT, 0, voxelPositions.size()); // 6 indices in index buffer object
-    //std::cout << voxelModel.meshes[0].indices.size()<< std::endl;
     glBindVertexArray(0);
 }
 
@@ -457,7 +447,6 @@ void VoxelHandler::genActiveVoxelTextures(Framebuffer depthFBO, Framebuffer targ
     glEnable(GL_DEPTH_TEST);
 }
 
-
 void VoxelHandler::drawVoxelModel2(glm::mat4 view, glm::mat4 proj, 
     Framebuffer FBOXminActive, Framebuffer FBOYminActive, Framebuffer FBOZminActive, 
     Framebuffer FBOXmaxActive, Framebuffer FBOYmaxActive, Framebuffer FBOZmaxActive)
@@ -550,5 +539,4 @@ void VoxelHandler::drawVoxelModel3(glm::mat4 view, glm::mat4 proj,
     // Bind and draw instanced
     bindBuffersInstanced();
     drawVoxelsInstanced(voxelModelShader3);
-
 }

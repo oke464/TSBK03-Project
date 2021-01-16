@@ -16,7 +16,6 @@ public:
     VoxelHandler(GLFWwindow* window, string const &path, const float & scaleFactor);
     ~VoxelHandler();
 
-    //Framebuffer getFBO() { return voxelCoordsFBO; }
     Framebuffer getInitFBO() { return voxelPosFBO; }
 
     void setVoxelModel(string const &path) { voxelModel = Model(path); }
@@ -46,7 +45,6 @@ public:
 
 private:
     GLFWwindow* window;
-    //Framebuffer voxelCoordsFBO;
     Shader* voxelShader;
     float voxelRadius;
     GLfloat squareTexCoord[8];
@@ -79,13 +77,7 @@ private:
 
 private: 
     void initVoxelPosTexture();
-    
-    
-
-
     std::vector<glm::vec3> voxelPositions;
-
-    
 };
 
 #endif

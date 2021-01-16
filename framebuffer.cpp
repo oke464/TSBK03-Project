@@ -31,8 +31,8 @@ Framebuffer::Framebuffer(int width, int height) :
     // Create renderbuffer
     glGenRenderbuffers(1, &rb);
     glBindRenderbuffer(GL_RENDERBUFFER, rb);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height); // use a single renderbuffer object for both a depth AND stencil buffer.
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rb); // now actually attach it
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);            // use a single renderbuffer object for both a depth AND stencil buffer.
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rb);    // now actually attach it
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
@@ -50,6 +50,7 @@ void Framebuffer::bindFBO()
 void Framebuffer::bindScreenFB()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // Hardcoded window size temporary solution, please see main.cpp 
     glViewport(0, 0, 1080, 800);
 }
 

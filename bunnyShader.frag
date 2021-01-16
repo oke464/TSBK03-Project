@@ -2,11 +2,11 @@
 out vec4 FragColor;
 in vec3 outNormal;
 
-in vec4 vertexColor; // the input variable from the vertex shader (same name and same type)  
+in vec4 vertexColor;  
 
 void main()
 {
-    const vec3 light = vec3(0.58, 0.58, 0.58); // Given in VIEW coordinates! You usually specify light sources in world coordinates.
+    const vec3 light = vec3(0.58, 0.58, 0.58); 
 	float diffuse, specular, shade;
 
 	// Diffuse

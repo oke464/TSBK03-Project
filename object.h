@@ -13,8 +13,6 @@ public:
 
     virtual void draw(Shader shader);
 
-
-    
     glm::vec3 getPosition() {return pos; }
     glm::mat4 getTransformation() {return transformation; }
     void setPosition(glm::vec3 position) { pos = position; }

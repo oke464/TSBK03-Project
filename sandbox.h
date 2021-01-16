@@ -60,9 +60,6 @@ private:
     Sphere bunny;
     Sphere cube;
     Sphere sphere;
-
-
-
 };
 
 #endif

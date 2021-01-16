@@ -9,7 +9,7 @@ Tiles::Tiles(Shader* shader, int rows, int colums) :
                 -0.5f, -0.5f, 0.0f,  // bottom left
                 -0.5f,  0.5f, 0.0f   // top left 
                 },
-    quadIndices{  // note that we start from 0!
+    quadIndices{  
                 0, 1, 3,   // first triangle
                 1, 2, 3    // second triangle
                 },
@@ -33,6 +33,7 @@ Tiles::Tiles(Shader* shader, int rows, int colums) :
             // Multiply translate matrix with rotation. Translate in -z and +x direction.
             quadPositionMatrices.push_back(glm::translate(rotation, glm::vec3(j + quadOffset, zOffset, 0.0f)));
 
+            // Swap colors, to make chessboard style grid
             if (colorToggle)
             {
                 colors.push_back(glm::vec3(1.0, 1.0, 1.0));
@@ -47,12 +48,6 @@ Tiles::Tiles(Shader* shader, int rows, int colums) :
         colorToggle = !colorToggle;
     }
 
-    //std::cout << quadPositionMatrices.size() << std::endl;
-
-    // Init bind buffers
-    //bindBuffers();
-
-    // Bind buffers for instancing
 }
 
 Tiles::~Tiles()
@@ -188,18 +183,17 @@ void Tiles::bindBuffersInstanced()
     glEnableVertexAttribArray(6); 
     glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
     
-
+    // Attrib divisor, one per vertex.
     glVertexAttribDivisor(3, 1);
     glVertexAttribDivisor(4, 1);
     glVertexAttribDivisor(5, 1);
     glVertexAttribDivisor(6, 1);
-
-    
 }
 
 void Tiles::drawTilesInstanced()
 {
     tilesShader->useProgram();
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, amount); // 6 indices in index buffer object
+    // 6 indices in index buffer object
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, amount); 
     glBindVertexArray(0);
 }

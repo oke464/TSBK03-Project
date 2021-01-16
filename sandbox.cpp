@@ -180,9 +180,9 @@ void Sandbox::display()
         float deltaT = (currTime - prevTime) / 2;
         prevTime = currTime;
 
+        // --------- To view depth bunny in screen fbo, click "b" in program
         if (bunnyToggle)
         { 
-            // --------- To bunny in screen fbo, click "b" in program
             depthShader->useProgram();
             // Bind FBO to get output.
 
@@ -223,10 +223,10 @@ void Sandbox::display()
             glm::mat4 model = glm::translate(rotation, transVec);
             
             depthShader->uploadMat4("model", model);
-            // Draw everything to offscreen buffer
+            
             bunny.draw(*depthShader);
-            // --------- 
         }
+        // --------- 
 
 
         //voxHandler->drawVoxelGrid(view, projection);
@@ -302,7 +302,7 @@ void Sandbox::display()
         drawQuad();
 
         // y-dir
-        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f, 7.0f, -15.0f));
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f, 1.0f, -15.0f));
         quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
         cubeShader->useProgram();
@@ -310,7 +310,7 @@ void Sandbox::display()
         depthFBO_Ymin.bindTex(cubeShader, "texUnit", 0);
         drawQuad();
 
-        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f, 1.0f, -15.0f));
+        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f, 7.0f, -15.0f));
         quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
         cubeShader->useProgram();
@@ -517,7 +517,7 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
     // *** With setting greater on*
     // Depthbuffer settings
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_GREATER);    // Make furthest fragments pass, (nearest)
+    glDepthFunc(GL_GREATER);    // Make furthest fragments pass
     glClearDepth(0.0);          // Have to set depth test to zero else nothing will pass
 
     FBOZGreater.bindFBO();
@@ -562,7 +562,6 @@ void Sandbox::drawTriangle()
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -571,16 +570,13 @@ void Sandbox::drawTriangle()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    // Unbind buffer and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
 
-    // draw our first triangle
+    // Draw triangle
     glUseProgram(sandboxShader->shaderID);
-    glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+    glBindVertexArray(VAO); 
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
@@ -591,7 +587,7 @@ void Sandbox::drawQuad()
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -603,42 +599,34 @@ void Sandbox::drawQuad()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+    glGenBuffers(1, &quadTexCoordBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, quadTexCoordBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadTexCoords), quadTexCoords, GL_STATIC_DRAW);
 
-     glGenBuffers(1, &quadTexCoordBuffer);
-     glBindBuffer(GL_ARRAY_BUFFER, quadTexCoordBuffer);
-     glBufferData(GL_ARRAY_BUFFER, sizeof(quadTexCoords), quadTexCoords, GL_STATIC_DRAW);
-
-     glEnableVertexAttribArray(2);
-     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    
+    // Unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
-
-    // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
 
-    // upload matrices to shader 
+    // Upload matrices to shader 
     cubeShader->useProgram();
     cubeShader->uploadMat4("projection", projection);
     cubeShader->uploadMat4("view", view);
     cubeShader->uploadMat4("model", quadModel);
 
-    // draw our first quad
+    // Draw quad
     glUseProgram(cubeShader->shaderID);
-    glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(VAO); 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    // glBindVertexArray(0); // no need to unbind it every time 
 }
 
 // Scroll input
 void Sandbox::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    Sandbox* me = static_cast<Sandbox*>(glfwGetWindowUserPointer(window));
+    Sandbox* sb = static_cast<Sandbox*>(glfwGetWindowUserPointer(window));
     float speed = (float)(0.05 * yoffset);
-    me->cameraPos += speed * me->cameraUp;
-    me->view = glm::lookAt(me->cameraPos, me->cameraPos + me->cameraFront, me->cameraUp);
+    sb->cameraPos += speed * sb->cameraUp;
+    sb->view = glm::lookAt(sb->cameraPos, sb->cameraPos + sb->cameraFront, sb->cameraUp);
 }
