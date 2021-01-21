@@ -21,22 +21,8 @@ public:
     void setVoxelModel(string const &path) { voxelModel = Model(path); }
 
     void bindBuffersInstanced();
-    void bindInitBuffersInstanced();
     void drawVoxelsInstanced(Shader* shader);
-    void initDrawVoxelsInstanced(Shader* shader);
     void drawVoxelGrid(glm::mat4 view, glm::mat4 proj);
-    void drawVoxelizedModel(glm::mat4 view, glm::mat4 proj, Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
-        Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater);
-    
-    void drawVoxelModel(glm::mat4 view, glm::mat4 proj, Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
-        Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater);
-    void genVoxelPositions(glm::mat4 view, glm::mat4 proj, Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
-        Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater);
-
-    void genActiveVoxelTextures(Framebuffer inputDepthFBO, Framebuffer targetFBO);
-    void drawVoxelModel2(glm::mat4 view, glm::mat4 proj, 
-            Framebuffer FBOXminActive, Framebuffer FBOYminActive, Framebuffer FBOZminActive, 
-            Framebuffer FBOXmaxActive, Framebuffer FBOYmaxActive, Framebuffer FBOZmaxActive);
 
     void drawVoxelModel3(glm::mat4 view, glm::mat4 proj, 
             glm::mat4 rotation, glm::mat4 translation, float modelScale,   
@@ -45,14 +31,9 @@ public:
 
 private:
     GLFWwindow* window;
-    Shader* voxelShader;
     float voxelRadius;
     GLfloat squareTexCoord[8];
     Shader* voxelLatticeShader;
-    Shader* voxelModelShader;
-    Shader* voxelInitShader;
-    Shader* voxelModelShader2;
-    Shader* voxelActiveShader;
     Shader* voxelModelShader3;
     Framebuffer voxelPosFBO;
     float near;

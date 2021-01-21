@@ -43,7 +43,7 @@ void main()
     float z = LinearizeDepth(gl_FragCoord.z);
 
     // Trying with plain fragcoord, looks linear to me.. 
-    // Minus and plus half is to transform to 0,0 and then put a scale to separate the max and min texture a little bit. Makes z-depth only the best actually.
+    // Minus and plus half is to transform to 0,0 and then put a scale to separate the max and min texture. 
     FragColor = vec4(vec3((gl_FragCoord.z - 0.5) * scaleFactor + 0.5) , 1.0);
     // -------------------------------------------------
 } 

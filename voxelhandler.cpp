@@ -3,12 +3,7 @@
 //Provide the initialized window, path to model and it's radius. 
 VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const float & modelRadius)
     :   window{window},
-        voxelShader{new Shader("voxelShader.vert", "voxelShader.frag")},
-        voxelInitShader{new Shader("voxelInitShader.vert", "voxelInitShader.frag")},
         voxelLatticeShader{new Shader("voxelLatticeShader.vert", "voxelLatticeShader.frag")},
-        voxelModelShader{new Shader("voxelModelShader.vert", "voxelModelShader.frag")},
-        voxelModelShader2{new Shader("voxelModelShader2.vert", "voxelModelShader2.frag")},
-        voxelActiveShader{new Shader("voxelActiveTest.vert", "voxelActiveTest.frag")},
         voxelModelShader3{new Shader("voxelModelShader3.vert", "voxelModelShader3.frag")},
         
         quadVertices{
@@ -30,8 +25,8 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
                       },
 
         voxelPosFBO{Framebuffer(1,1)},
-        far{10},
-        near{0},
+        far{10}, // Hardcoded from orthographic frustum size.
+        near{0}, // Hardcoded from orthographic frustum size.
         voxelModel{Model(modelPath)},
         voxelSizeScale{0.25f}, // Change voxel size here (size of cubes). 0.3f has good performance, but low resolution. 
         modelSizeScale{1.0f}
@@ -73,103 +68,9 @@ VoxelHandler::VoxelHandler(GLFWwindow* window, string const &modelPath, const fl
 
 VoxelHandler::~VoxelHandler()
 {
-    delete voxelShader;
     delete voxelLatticeShader;
-    delete voxelModelShader;
-    delete voxelInitShader;
-    delete voxelModelShader2;
-    delete voxelActiveShader;
     delete voxelModelShader3;
 }
-
-void VoxelHandler::initVoxelPosTexture()
-{
-/*
-THis should just render a quad on offscreen FBO with NxN amount of particles with vertex colors as position indication.
-Must have 8 vertices, then color so that all positions are covered. Then we can scale so that they are spaced with 2*radius.
-LIKE: 
-
-
-        0,0,1                     1,0,1
-
-0,0,0                     1,0,0
-
-
-        0,1,1                     1,1,1
-
-0,1,0                     1,1,0
-
-This will not work! 
-Vertex position have to be evenly spaced, to get the right amount of fragments.
-0.25 between each I guess.
-
-Then it should be texture size: 0.25*N x 4*N.
-
-Remember to disable depthtest. See some guide on FBO rendering. 
-
-
-Extension write vertices as a grid in 2D with known positions. Then give each of those vertices the color of as "real" position vector.
-*/
-    voxelPosFBO.bindFBO();
-    // Clear buffer, keep depth to use z-buffer in offscreen fbo
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.9f, 0.6f, 0.6f, 1.0f);
-
-    voxelShader->useProgram();
-    // Upload texCoords for a square
-    /*
-    glEnableVertexAttribArray(2);	
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(squareTexCoord), (void*)squareTexCoord);
-    */
-    // Draw init voxelpositions to texture.
-    
-
-    voxelPosFBO.bindScreenFB();
-}
-
-void VoxelHandler::genVoxelPositions(glm::mat4 view, glm::mat4 proj, Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
-        Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater)
-{
-
-    glDisable(GL_DEPTH_TEST);
-    //Bind voxelFBO to write result to 
-    voxelPosFBO.bindFBO();
-    //voxelPosFBO.bindScreenFB();
-    // Clear buffer, keep depth to use z-buffer in offscreen fbo
-    // Set aplha to 0 because if voxelModelShader checks if alpha == 1 to know if voxel is active
-    glClearColor(0,1,0,0); 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    voxelInitShader->useProgram();
-
-    // Use near and far for z-buffer generation.        
-    float near = 0.0f;
-    float far = 10.0f;
-    voxelInitShader->uploadFloat("near", near);
-    voxelInitShader->uploadFloat("far", far);
-
-    // Bind all textures to sample depthvalues from
-    voxelInitShader->useProgram();
-    glActiveTexture(GL_TEXTURE0);
-    FBOX.bindTex(voxelInitShader, "texFBOX", 0);
-    glActiveTexture(GL_TEXTURE1);
-    FBOY.bindTex(voxelInitShader, "texFBOY", 1);
-    glActiveTexture(GL_TEXTURE2);
-    FBOZ.bindTex(voxelInitShader, "texFBOZ", 2);
-    glActiveTexture(GL_TEXTURE3);
-    FBOXGreater.bindTex(voxelInitShader, "texFBOXGreater", 3);
-    glActiveTexture(GL_TEXTURE4);
-    FBOYGreater.bindTex(voxelInitShader, "texFBOYGreater", 4);
-    glActiveTexture(GL_TEXTURE5);
-    FBOZGreater.bindTex(voxelInitShader, "texFBOZGreater", 5);
-
-    bindInitBuffersInstanced();
-    initDrawVoxelsInstanced(voxelInitShader);
-    // Unbind voxelFBO
-    voxelPosFBO.bindScreenFB();
-
-    glEnable(GL_DEPTH_TEST);
-}   
 
 void VoxelHandler::bindBuffersInstanced()
 {
@@ -238,59 +139,6 @@ void VoxelHandler::bindBuffersInstanced()
     glBindVertexArray(0);
 }
 
-void VoxelHandler::bindInitBuffersInstanced()
-{
-    glGenVertexArrays(1, &VAO2);
-    glGenBuffers(1, &VBO2);
-    glGenBuffers(1, &EBO2);
-
-    glBindVertexArray(VAO2);
-    // set the vertex attribute pointers # WARNING # Uses Vertex struct in mashes class
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    // A great thing about structs is that their memory layout is sequential for all its items.
-    // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
-    // again translates to 3/2 floats which translates to a byte array.
-    // vertex Positions
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices[0], GL_STATIC_DRAW);  
-    glEnableVertexAttribArray(0);	
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-    
-    // Vertex texture coords. One per instance so no attribDivisor.
-    glGenBuffers(1, &squareTexCoordBuffer2);
-    glBindBuffer(GL_ARRAY_BUFFER, squareTexCoordBuffer2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(squareTexCoord), squareTexCoord, GL_STATIC_DRAW);  
-    glEnableVertexAttribArray(2);	
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)0);
-   
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
-    
-    
-    // Bind transformation matrices 
-    glGenBuffers(1, &modelMatrixBuffer2);
-    glBindBuffer(GL_ARRAY_BUFFER, modelMatrixBuffer2);
-    glBufferData(GL_ARRAY_BUFFER, voxelPositions.size() * sizeof(glm::mat4), &voxelPositionMatrices[0], GL_STATIC_DRAW);
-
-    // vertex attributes
-    std::size_t vec4Size = sizeof(glm::vec4);
-    glEnableVertexAttribArray(7); 
-    glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
-    glEnableVertexAttribArray(8); 
-    glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
-    glEnableVertexAttribArray(9); 
-    glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
-    glEnableVertexAttribArray(10); 
-    glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
-    
-
-    glVertexAttribDivisor(7, 1);
-    glVertexAttribDivisor(8, 1);
-    glVertexAttribDivisor(9, 1);
-    glVertexAttribDivisor(10, 1);
-
-    glBindVertexArray(0);
-}
-
 void VoxelHandler::drawVoxelsInstanced(Shader* shader)
 {
     shader->useProgram();
@@ -301,187 +149,30 @@ void VoxelHandler::drawVoxelsInstanced(Shader* shader)
     glBindVertexArray(0);
 }
 
-void VoxelHandler::initDrawVoxelsInstanced(Shader* shader)
-{
-    shader->useProgram();
-    glBindVertexArray(VAO2);
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, voxelPositions.size()); // 6 indices in index buffer object
-    //std::cout << voxelModel.meshes[0].indices.size()<< std::endl;
-    glBindVertexArray(0);
-}
-
 void VoxelHandler::drawVoxelGrid(glm::mat4 view, glm::mat4 proj)
 {
-    // Unbind voxelFBO
+    // Bind screen FB to display in scene
     voxelPosFBO.bindScreenFB();
     voxelLatticeShader->useProgram();
-    // Bind FBO to get output.
 
     // Create camera for depth buffer generator
     glm::vec3 dPos(0, 0, 5);
     glm::vec3 dFront(0, 0, -1);
     glm::vec3 dUp(0, 1, 0);
     glm::mat4 depthView = glm::lookAt(dPos, glm::vec3(0, 0, 0), dUp);
-    voxelLatticeShader->uploadMat4("dView", view);
+    voxelLatticeShader->uploadMat4("View", view);
     
-    // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.
-    float left = -0.5f;
-    float right = 0.5f;
-    float bottom = -0.5f;
-    float top = 0.5f;          
-    float near = 0.0f;
-    float far = 10.0f;
-    glm::mat4 depthProj = glm::ortho(left, right, bottom, top, near, far);
-    voxelLatticeShader->uploadMat4("dProj", proj);
-    //voxelLatticeShader->uploadFloat("near", near);
-    //voxelLatticeShader->uploadFloat("far", far);
+    // Pass sandbox projection matrix
+    voxelLatticeShader->uploadMat4("Proj", proj);
 
+    // Upload model scaling, rotaion, translation if desired.
+    voxelLatticeShader->uploadFloat("modelScaleFactor", 1.0f);
+    voxelLatticeShader->uploadMat4("modelRotation", glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    voxelLatticeShader->uploadMat4("modelTranslation", glm::translate(glm::mat4(1.0f), glm::vec3(9.0f, 5.0f, -25.0f)));
+    voxelLatticeShader->uploadMat4("originTranslation", glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, -5.0f, 5.0f)));
+
+    bindBuffersInstanced();
     drawVoxelsInstanced(voxelLatticeShader);
-
-}
-
-void VoxelHandler::drawVoxelizedModel(glm::mat4 view, glm::mat4 proj, Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
-        Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater)
-{
-    // Unbind voxelFBO
-    voxelPosFBO.bindScreenFB();
-    voxelShader->useProgram();
-    // Bind FBO to get output.
-
-    // Create camera for depth buffer generator
-    voxelShader->uploadMat4("dView", view);
-    
-    // Create Projection for depth buffer generator, will be a box. Use near and far for z-buffer generation.        
-    float near = 0.0f;
-    float far = 10.0f;
-    voxelShader->uploadMat4("dProj", proj);
-    //voxelLatticeShader->uploadFloat("near", near);
-    //voxelLatticeShader->uploadFloat("far", far);
-
-    // Bind all textures to sample depthvalues from
-    voxelShader->useProgram();
-    glActiveTexture(GL_TEXTURE0);
-    FBOX.bindTex(voxelShader, "texFBOX", 0);
-    glActiveTexture(GL_TEXTURE1);
-    FBOY.bindTex(voxelShader, "texFBOY", 1);
-    glActiveTexture(GL_TEXTURE2);
-    FBOZ.bindTex(voxelShader, "texFBOZ", 2);
-    glActiveTexture(GL_TEXTURE3);
-    FBOXGreater.bindTex(voxelShader, "texFBOXGreater", 3);
-    glActiveTexture(GL_TEXTURE4);
-    FBOYGreater.bindTex(voxelShader, "texFBOYGreater", 4);
-    glActiveTexture(GL_TEXTURE5);
-    FBOZGreater.bindTex(voxelShader, "texFBOZGreater", 5);
-
-
-
-    drawVoxelsInstanced(voxelShader);
-
-}
-
-void VoxelHandler::drawVoxelModel(glm::mat4 view, glm::mat4 proj, Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
-        Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater)
-{
-    /*
-    genVoxelPositions(view, proj, FBOX, FBOY,FBOZ, 
-        FBOXGreater, FBOYGreater, FBOZGreater);
-    */
-    voxelPosFBO.bindScreenFB();
-    voxelModelShader->useProgram();
-
-    glActiveTexture(GL_TEXTURE0);
-    voxelPosFBO.bindTex(voxelModelShader, "voxPosTex", 0);
-
-    //###!!! Remove later
-    glActiveTexture(GL_TEXTURE1);
-    FBOY.bindTex(voxelModelShader, "texFBOY", 1);
-
-    // Pass sandbox camera
-    voxelModelShader->uploadMat4("dView", view);
-    
-    // Pass sandbox projection. don't think near and far are used.      
-    float near = 0.0f;
-    float far = 10.0f;
-    voxelModelShader->uploadMat4("dProj", proj);
-
-    bindBuffersInstanced();
-    drawVoxelsInstanced(voxelModelShader);
-
-
-    
-}
-
-void VoxelHandler::genActiveVoxelTextures(Framebuffer depthFBO, Framebuffer targetFBO)
-{
-    // Don't know if this makes a difference for offscreen FBO, but did some debugging with on-screen so needed there. 
-    glDisable(GL_DEPTH_TEST);
-
-    // Bind target FBO
-    targetFBO.bindFBO();
-    //targetFBO.bindScreenFB();
-
-    // Clear buffer, keep depth to use z-buffer in offscreen fbo
-    // Set aplha to 0 because if voxelModelShader checks if alpha == 1 to know if voxel is active
-    glClearColor(0,1,0,0); 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    voxelActiveShader->useProgram();
-
-    // Bind texture containing depth data.
-    glActiveTexture(GL_TEXTURE1);
-    depthFBO.bindTex(voxelActiveShader, "depthTex", 1);
-
-    voxelActiveShader->useProgram();
-    // Use near and far for scaling the voxel position to z-buffer space [0,1]   
-    float near = 0.0f;
-    float far = 10.0f;
-    voxelActiveShader->uploadFloat("near", near);
-    voxelActiveShader->uploadFloat("far", far);
-
-    // Bind everything and draw
-    bindInitBuffersInstanced();
-    initDrawVoxelsInstanced(voxelActiveShader);
-
-    targetFBO.bindScreenFB();
-
-    glEnable(GL_DEPTH_TEST);
-}
-
-void VoxelHandler::drawVoxelModel2(glm::mat4 view, glm::mat4 proj, 
-    Framebuffer FBOXminActive, Framebuffer FBOYminActive, Framebuffer FBOZminActive, 
-    Framebuffer FBOXmaxActive, Framebuffer FBOYmaxActive, Framebuffer FBOZmaxActive)
-
-{
-    // Bind screen FBO
-    voxelPosFBO.bindScreenFB();
-
-    // Use correct shader
-    voxelModelShader2->useProgram();
-
-    // Upload all 6 active voxel test textures
-    glActiveTexture(GL_TEXTURE0);
-    FBOXminActive.bindTex(voxelModelShader2, "FBOXminActive", 0);
-    glActiveTexture(GL_TEXTURE1);
-    FBOYminActive.bindTex(voxelModelShader2, "FBOYminActive", 1);
-    glActiveTexture(GL_TEXTURE2);
-    FBOZminActive.bindTex(voxelModelShader2, "FBOZminActive", 2);
-    glActiveTexture(GL_TEXTURE3);
-    FBOXmaxActive.bindTex(voxelModelShader2, "FBOXmaxActive", 3);
-    glActiveTexture(GL_TEXTURE4);
-    FBOYmaxActive.bindTex(voxelModelShader2, "FBOYmaxActive", 4);
-    glActiveTexture(GL_TEXTURE5);
-    FBOZmaxActive.bindTex(voxelModelShader2, "FBOZmaxActive", 5);
-
-    // Upload view and projection matrix 
-    // Pass sandbox camera
-    voxelModelShader2->uploadMat4("dView", view);
-    // Pass sandbox projection. 
-    voxelModelShader2->uploadMat4("dProj", proj);
-
-    // Bind and draw instanced.
-    bindBuffersInstanced();
-    drawVoxelsInstanced(voxelModelShader2);
-
 
 }
 

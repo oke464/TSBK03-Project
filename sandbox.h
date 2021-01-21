@@ -35,7 +35,6 @@ public:
     Shader* depthShader;
     Shader* cubeShader;
 private:
-    void initShaders();
     void genereteFBODepthTextures(Framebuffer FBO1, Framebuffer FBO2, Framebuffer FBO3, Framebuffer FBO4, Framebuffer FBO5, Framebuffer FBO6);
     static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 

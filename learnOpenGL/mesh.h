@@ -1,4 +1,4 @@
-// This Shader class is based on the class from: 
+// This Mesh class is based on the class from: 
 // https://learnopengl.com/code_viewer_gh.php?code=includes/learnopengl/mesh.h
 // Creates a mesh object from loaded .obj via Assimp library
 

@@ -129,14 +129,6 @@ void Sandbox::display()
     Framebuffer depthFBO_Zmax(texSize, texSize);
     Framebuffer depthFBO_Ymax(texSize, texSize);
     Framebuffer depthFBO_Xmax(texSize, texSize);
-/* Version2
-    Framebuffer activeVoxelFBO_Zmin(wWidth, wHeight);
-    Framebuffer activeVoxelFBO_Ymin(wWidth, wHeight);
-    Framebuffer activeVoxelFBO_Xmin(wWidth, wHeight);
-    Framebuffer activeVoxelFBO_Zmax(wWidth, wHeight);
-    Framebuffer activeVoxelFBO_Ymax(wWidth, wHeight);
-    Framebuffer activeVoxelFBO_Xmax(wWidth, wHeight);
-*/
 
     // This generates textures with depth data
     genereteFBODepthTextures(depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
@@ -144,23 +136,6 @@ void Sandbox::display()
 
     glDepthFunc(GL_LESS);
     glClearDepth(1.0);
-
-/* Version1
-    // Generate a texture with voxelpositions, an activate voxel if it is within the
-    // limits of z-buffer textures.
-    voxHandler->genVoxelPositions(view, projection, 
-            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
-            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
-*/
-/* Version2
-    // Generate voxel active textures these are used to check in voxelmodel draw call.
-    voxHandler->genActiveVoxelTextures(depthFBO_Zmin, activeVoxelFBO_Zmin);
-    voxHandler->genActiveVoxelTextures(depthFBO_Xmin, activeVoxelFBO_Xmin);
-    voxHandler->genActiveVoxelTextures(depthFBO_Ymin, activeVoxelFBO_Ymin);
-    voxHandler->genActiveVoxelTextures(depthFBO_Zmax, activeVoxelFBO_Zmax);
-    voxHandler->genActiveVoxelTextures(depthFBO_Xmax, activeVoxelFBO_Xmax);
-    voxHandler->genActiveVoxelTextures(depthFBO_Ymax, activeVoxelFBO_Ymax);
-*/    
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -206,7 +181,7 @@ void Sandbox::display()
             depthShader->uploadFloat("near", near);
             depthShader->uploadFloat("far", far);
 
-            if(transVec.z <= -6 || transVec.z >= 6)
+            if(transVec.z <= -1 || transVec.z >= 1)
             {
                 //std::cout << "change dir: " << transVec.z << std::endl;
                 moveDir = -moveDir;
@@ -218,7 +193,7 @@ void Sandbox::display()
             glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(5,5,5));
 
             // Rotation to Z direction
-            glm::mat4 rotation = glm::rotate(scale, glm::radians(t), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
+            glm::mat4 rotation = glm::rotate(scale, glm::radians(0.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
 
             glm::mat4 model = glm::translate(rotation, transVec);
             
@@ -228,44 +203,33 @@ void Sandbox::display()
         }
         // --------- 
 
-
-        //voxHandler->drawVoxelGrid(view, projection);
-/*
-        voxHandler->drawVoxelizedModel(view, projection, 
-            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
-            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
-
-*/
-/* Version1 UNCOMMENT if we want to generate textures each frame
-        voxHandler->genVoxelPositions(view, projection, 
-            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
-            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
-*/
-/* Version1
-        voxHandler->drawVoxelModel(view, projection, 
-            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
-            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
-*/
-/* Version 2
-        voxHandler->drawVoxelModel2(view, projection, 
-            activeVoxelFBO_Xmin, activeVoxelFBO_Ymin, activeVoxelFBO_Zmin, 
-            activeVoxelFBO_Xmax, activeVoxelFBO_Ymax, activeVoxelFBO_Zmax);
-*/
+        // --- Draw voxelized model and lattice
+        voxHandler->drawVoxelGrid(view, projection);
 
         voxHandler->drawVoxelModel3(view, projection, 
-            glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
-            glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 5.0f, -5.0f)),
+            glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+            glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 3.0f, -10.0f)),
+            1.0f,
+            depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
+            depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
+
+/* // Uncomment to display entire bunny family 
+        voxHandler->drawVoxelModel3(view, projection, 
+            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+            glm::translate(glm::mat4(1.0f), glm::vec3(15.0f, 2.0f, -10.0f)),
             0.5f,
             depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
             depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
 
         voxHandler->drawVoxelModel3(view, projection, 
-            glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
-            glm::translate(glm::mat4(1.0f), glm::vec3(12.0f, 5.0f, -5.0f)),
-            0.5f,
+            glm::rotate(glm::mat4(1.0f), glm::radians(75.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+            glm::translate(glm::mat4(1.0f), glm::vec3(14.0f, 1.0f, -9.0f)),
+            0.2f,
             depthFBO_Xmin, depthFBO_Ymin, depthFBO_Zmin, 
             depthFBO_Xmax, depthFBO_Ymax, depthFBO_Zmax);
-
+*/
+        // --------- 
+     
         // ------ For demo, display depth textures on quads around bunny
         // z-dir
         quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -318,62 +282,7 @@ void Sandbox::display()
         depthFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
         drawQuad();
         // ------
-/* Version3 
-        // ------------ Demo display active voxeltextures
-        float xOffset = -7.0f;
-        // z-dir
-        quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        quadModel = glm::translate(quadModel, glm::vec3(20.0f + xOffset, 4.0f, -12.0f));
-        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
-        cubeShader->useProgram();
-        glActiveTexture(GL_TEXTURE0);
-        activeVoxelFBO_Zmin.bindTex(cubeShader, "texUnit", 0);
-        drawQuad();
 
-        quadModel = glm::rotate(glm::mat4{1.0f}, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        quadModel = glm::translate(quadModel, glm::vec3(20.0f + xOffset, 4.0f, -18.0f));
-        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
-        cubeShader->useProgram();
-        glActiveTexture(GL_TEXTURE0);
-        activeVoxelFBO_Zmax.bindTex(cubeShader, "texUnit", 0);
-        drawQuad();
-
-        // x-dir
-        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(17.0f + xOffset, 4.0f, -15.0f));
-        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
-        cubeShader->useProgram();
-        glActiveTexture(GL_TEXTURE0);
-        activeVoxelFBO_Xmin.bindTex(cubeShader, "texUnit", 0);
-        drawQuad();
-
-        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(23.0f + xOffset, 4.0f, -15.0f));
-        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
-        cubeShader->useProgram();
-        glActiveTexture(GL_TEXTURE0);
-        activeVoxelFBO_Xmax.bindTex(cubeShader, "texUnit", 0);
-        drawQuad();
-
-        // y-dir
-        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f + xOffset, 7.0f, -15.0f));
-        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
-        cubeShader->useProgram();
-        glActiveTexture(GL_TEXTURE0);
-        activeVoxelFBO_Ymin.bindTex(cubeShader, "texUnit", 0);
-        drawQuad();
-
-        quadModel = glm::translate(glm::mat4{1.0f}, glm::vec3(20.0f + xOffset, 1.0f, -15.0f));
-        quadModel = glm::rotate(quadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        quadModel = glm::scale(quadModel, glm::vec3(5.0f, 5.0f, 5.0f));
-        cubeShader->useProgram();
-        glActiveTexture(GL_TEXTURE0);
-        activeVoxelFBO_Ymax.bindTex(cubeShader, "texUnit", 0);
-        drawQuad();
-        // ------
-*/
-        // ------------------------------------
 
 
         // ------------ Things in scene ----------------------
@@ -395,9 +304,7 @@ void Sandbox::display()
         bunny.updateTransformation();
         bunnyShader->uploadMat4("model", bunny.getTransformation());
         bunny.draw(*bunnyShader);
-
         // ------------------------------------
-        //std::cout << glGetError() << std::endl;
 
         // #######################
 
@@ -408,15 +315,10 @@ void Sandbox::display()
     }
 }
 
-void Sandbox::initShaders()
-{
-
-}
-
 void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Framebuffer FBOZ, 
                 Framebuffer FBOXGreater, Framebuffer FBOYGreater, Framebuffer FBOZGreater)
 {
-    // ----------- DEPTH TESTING STUFF ----------------
+    // ----------- DEPTH BUFFER Generation ----------------
     //std::cout << deltaT << std::endl;
     depthShader->useProgram();
     // Bind FBO to get output.
@@ -453,18 +355,17 @@ void Sandbox::genereteFBODepthTextures(Framebuffer FBOX, Framebuffer FBOY, Frame
     glm::mat4 trans = glm::translate(scale, glm::vec3(0, -0.1, 0)); 
 
     // --- Rotations
-    //      By default we look in negative z-direction. To make all depth buffers align we have to rotate the object to look in negative x and negative y direction respectively. 
+    //      By default we look in negative z-direction. But since we are treating the voxelspace as building a cube such that each voxelposition can be in x: 0->10, y:0->10 but z:0->-10. 
+    //      To make all depth buffers align we have to rotate the object to look in positive x and positive y direction respectively. 
     //      Then we can make our depth test textures with the same testfunction.
     // Rotation to Z direction
     glm::mat4 modelDirZ = glm::rotate(scale, glm::radians(0.0f), glm::vec3(0, 0, 1)); // Set t in radians to rotate object.
 
-    // Rotation to X direction. Positive rotation around Y -> looking in negative x-dir
+    // Rotation to X direction. Positive rotation around Y -> looking in positive x-dir
     glm::mat4 modelDirX = glm::rotate(scale, glm::radians(90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
     
-    // Rotation to Y direction. Negative rotation around X -> looking in negative y-dir
+    // Rotation to Y direction. Negative rotation around X -> looking in positive y-dir
     glm::mat4 modelDirY = glm::rotate(scale, glm::radians(-90.0f), glm::vec3(1, 0, 0)); // Set t in radians to rotate object.
-    // Have to rotate around Y also (Don't know why it don't align with Z without this, might be that rotation is left from x-dir rot)
-    modelDirY = glm::rotate(modelDirY, glm::radians(-90.0f), glm::vec3(0, 1, 0)); // Set t in radians to rotate object.
     
     // Translations to make center of bunny in center of screen. 
     modelDirZ = glm::translate(modelDirZ, glm::vec3(0, -0.1, 0));

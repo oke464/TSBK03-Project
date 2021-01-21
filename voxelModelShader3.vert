@@ -45,10 +45,10 @@ void main()
     // In x-dir y-dir is height and z-dir is width
     float yHeightLookUp = (voxPos.y / (far - near)) * texHeight;
     float zWidthLookUp = (voxPos.z / (far - near)) * texWidth;
-    // In y-dir x-dir is height and z-dir is width
-    float xHeightLookUp = (voxPos.x / (far - near)) * texHeight;
-    // In z-dir y-dir is height and x-dir is width
+    // In y-dir z-dir is height and x-dir is width
     float xWidthLookUp = (voxPos.x / (far - near)) * texWidth;
+    float zHeightLookUp = (voxPos.z / (far - near)) * texHeight;
+    // In z-dir y-dir is height and x-dir is width
 
     // All voxPos coordinates in z-buffer range 0,1 for comparison
     float voxPosDepthX = voxPos.x / (far - near); 
@@ -64,8 +64,9 @@ void main()
     vec4 xMinDepth = texelFetch(FBOXmin, ivec2(texWidth + zWidthLookUp, yHeightLookUp), 0);
     vec4 xMaxDepth = texelFetch(FBOXmax, ivec2(texWidth + zWidthLookUp, yHeightLookUp), 0);
     // In y-dir we have the xz plane as look-up coords
-    vec4 yMinDepth = texelFetch(FBOYmin, ivec2(-zWidthLookUp, xHeightLookUp), 0);
-    vec4 yMaxDepth = texelFetch(FBOYmax, ivec2(-zWidthLookUp, xHeightLookUp), 0);
+    // Note that we have to offset coordinates in  height direction, to start from the correct bottom corner. 
+    vec4 yMinDepth = texelFetch(FBOYmin, ivec2(xWidthLookUp, texHeight + zHeightLookUp), 0);
+    vec4 yMaxDepth = texelFetch(FBOYmax, ivec2(xWidthLookUp, texHeight + zHeightLookUp), 0);
     // In z-dir we have the xy plane as look-up coords
     vec4 zMinDepth = texelFetch(FBOZmin, ivec2(xWidthLookUp, yHeightLookUp), 0);
     vec4 zMaxDepth = texelFetch(FBOZmax, ivec2(xWidthLookUp, yHeightLookUp), 0);
@@ -90,7 +91,7 @@ void main()
             {
                 if (voxPosDepthZ >= (zMinDepth.x) && voxPosDepthZ <= (zMaxDepth.x))
                 {
-                    gl_Position = dProj * dView * scaleMatrix * modelTranslation * modelRotation * originTranslation * voxMod * vec4(aPos, 1.0); 
+                    gl_Position = dProj * dView * modelTranslation * modelRotation * scaleMatrix * originTranslation * voxMod * vec4(aPos, 1.0); 
                     vertexColor = vec4(voxPosDepthX, voxPosDepthY, voxPosDepthZ, 1.0);
                 }
             }
